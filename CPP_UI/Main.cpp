@@ -1,30 +1,15 @@
-#include <utils/win32/window/window.h>
-#include <utils/win32/window/style.h>
-#include <utils/win32/window/regions.h>
-#include <utils/win32/window/input_system.h>
+#include <utils/MS/window/window.h>
+#include <utils/MS/window/style.h>
+#include <utils/MS/window/regions.h>
+#include <utils/MS/window/snap_on_drag.h>
+#include <utils/MS/window/input/mouse.h>
 
 #include "graphics/d2d/window.h"
 #include "graphics/d2d/brush.h"
 
 #include "UI/UI.h"
 
-struct window_t : utils::win32::window::t<utils::win32::window::style, utils::win32::window::resizable_edge, utils::win32::window::input::mouse, graphics::d2d::window, UI::window>, utils::oop::devirtualize
-	{
-	struct create_info
-		{
-		utils::win32::window::base::create_info base;
-		utils::win32::window::style::create_info style;
-		graphics::d2d::window::create_info d2d;
-		};
-
-	window_t(create_info create_info) :
-		utils::win32::window::base {create_info.base      },
-		utils::win32::window::style{create_info.style     },
-		graphics::d2d::window      {create_info.d2d       }
-		{}
-	};
-
-UI::core::element_own title_bar(window_t& window)
+UI::core::element_own title_bar(utils::MS::window::base& window)
 	{
 	auto root{std::make_unique<UI::containers::stack>()};
 
@@ -59,8 +44,7 @@ UI::core::element_own title_bar(window_t& window)
 	return std::move(root);
 	}
 
-
-UI::core::element_own sample_ui(window_t& window)
+UI::core::element_own sample_ui(utils::MS::window::base& window)
 	{
 	auto root{std::make_unique<UI::containers::group_ver>()};
 	root->alignment = UI::align_hor::left;
@@ -206,80 +190,94 @@ int main()
 	utils::containers::object_pool<std::function<void(graphics::d2d::frame&)>> draw_operations;
 
 	// Setup window 
-	window_t::initializer window_initializer;
-	window_t window{window_t::create_info
+	utils::MS::window::initializer window_initializer;
+	
+	utils::MS::window::base window
 		{
-		.base
+		utils::MS::window::base::create_info
 			{
+			.title{L"George G. Goof"},
+			//.position{{10, 60}},
+			//.size{{800, 600}}
 			},
-		.style
+		utils::MS::window::style::create_info
 			{
-			.transparency{utils::win32::window::style::transparency_t::composition_attribute},
-			.borders{utils::win32::window::style::value_t::disable}
+			.transparency{utils::MS::window::style::transparency_t::composition_attribute},
+			.borders     {utils::MS::window::style::value_t::disable}
 			},
-		.d2d
+		utils::MS::window::resizable_edge::create_info
+			{
+			.thickness{8}
+			},
+		graphics::d2d::window::create_info
 			{
 			.manager{d2d_manager},
 			.on_render{[&](graphics::d2d::window& windowd)
 				{
 				auto frame{windowd.begin_frame({.1f, .1f, .1f, 0.f})};
+				frame.rt()->Clear(D2D1_COLOR_F{.r{0.f}, .g{0.f}, .b{1.f}, .a{.5f}});
 				for (const auto& draw_operation : draw_operations)
 					{
 					draw_operation(frame);
 					}
 				}}
-			}
-		}};
+			},
+		utils::MS::window::input::mouse::create_info{}
+		};
 
-	// Setup input
-	utils::input::mouse mouse;
-	window.mice_ptrs.emplace(&mouse);
+	auto ui_root{sample_ui(window)};
+	UI::window::create_info ui_create_info
+		{
+		.ui_root{ui_root},
+		.mouse{window.get_module_ptr<utils::MS::window::input::mouse>()->default_mouse},
+		.d2d_window_module{*window.get_module_ptr<graphics::d2d::window>()},
+		};
 
-	
+	auto& window_ui{window.emplace_module_from_create_info(ui_create_info)};
+
 	// Background grid
 	draw_operations.emplace([&window](graphics::d2d::frame& frame)
 		{
-	
 		// Draw a grid background.
-		graphics::d2d::brush::solid_color brush{frame.rt(), utils::graphics::colour::rgba{0, 1, 0}};
-	
-		int width = static_cast<int>(window.client_rect.width);
-		int height = static_cast<int>(window.client_rect.height);
-	
+		auto brush_handle{frame.rt().brushes_solid.create_solid(utils::graphics::colour::rgba{0, 1, 0})};
+		
+		int width  = static_cast<int>(window.client_rect.width ());
+		int height = static_cast<int>(window.client_rect.height());
+		
 		for (int x = 0; x < width; x += 10)
 			{
 			frame.rt()->DrawLine
-				(
-				D2D1::Point2F(static_cast<FLOAT>(x), 0.0f),
-				D2D1::Point2F(static_cast<FLOAT>(x), height),
-				brush.get(),
+			(
+				D2D1::Point2F(static_cast<FLOAT>(x), static_cast<FLOAT>(0.0f  )),
+				D2D1::Point2F(static_cast<FLOAT>(x), static_cast<FLOAT>(height)),
+				brush_handle->get(),
 				0.5f
-				);
+			);
 			}
-	
+		
 		for (int y = 0; y < height; y += 10)
 			{
 			frame.rt()->DrawLine
-				(
-				D2D1::Point2F(0.0f, static_cast<FLOAT>(y)),
-				D2D1::Point2F(width, static_cast<FLOAT>(y)),
-				brush.get(),
+			(
+				D2D1::Point2F(static_cast<FLOAT>(0.0f ), static_cast<FLOAT>(y)),
+				D2D1::Point2F(static_cast<FLOAT>(width), static_cast<FLOAT>(y)),
+				brush_handle->get(),
 				0.5f
-				);
+			);
 			}
 		});
 
 	//Setup UI
-	UI::manager ui_manager{sample_ui(window)};
-	ui_manager.register_mouse_events(mouse);
 
-	window.set_ui_manager(ui_manager);
-
-	draw_operations.emplace([&ui_manager](graphics::d2d::frame& frame)
+	draw_operations.emplace([&window_ui](graphics::d2d::frame& frame)
 		{
-		ui_manager.debug_draw(frame.rt());
-		ui_manager.draw(frame.rt());
+		window_ui.get_manager().debug_drawz();
+		window_ui.get_manager().draw();
 		});
 
-	while (window.is_open()) { window.wait_event(); }
+	window.show();
+	while (window.is_open())
+		{
+		window.wait_event();
+		}
 	}

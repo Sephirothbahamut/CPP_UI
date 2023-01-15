@@ -43,6 +43,9 @@
     <Filter Include="Header Files\graphics\d2d\details\wrappers">
       <UniqueIdentifier>{13da6694-e822-4cf8-b761-c300cfb2960d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\UI\drawables">
+      <UniqueIdentifier>{50600822-17db-4ff6-b5e2-45fa7cdaa448}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -133,6 +136,24 @@
     </ClInclude>
     <ClInclude Include="UI\window.h">
       <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\drawables.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\drawables\rect.h">
+      <Filter>Header Files\UI\drawables</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\drawables\text.h">
+      <Filter>Header Files\UI\drawables</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\drawables\circ.h">
+      <Filter>Header Files\UI\drawables</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\drawables\image.h">
+      <Filter>Header Files\UI\drawables</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\drawables\common.h">
+      <Filter>Header Files\UI\drawables</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

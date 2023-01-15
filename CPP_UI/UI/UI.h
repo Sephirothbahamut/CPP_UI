@@ -4,6 +4,7 @@
 #include "containers.h"
 #include "wrappers.h"
 #include "widgets.h"
+#include "drawables.h"
 #include "manager.h"
 #include "window.h"
 

@@ -25,28 +25,28 @@ namespace UI::inner::core
 	using elements_obs = std::vector<   utils::observer_ptr<element>>;
 	using elements_own = std::vector<std::unique_ptr<element>>;
 	using element_own  = std::unique_ptr<element>;
-	using element_obs  =    utils::observer_ptr<element>;
+	using element_obs  = utils::observer_ptr<element>;
 	using element_ref  = element&;
 
-	using drawable = const element;
+	class drawable;
 	using drawables_obs = std::vector<   utils::observer_ptr<const drawable>>;
 	using drawables_own = std::vector<std::unique_ptr<const drawable>>;
 	using drawable_own  = std::unique_ptr<drawable>;
-	using drawable_obs  =    utils::observer_ptr<drawable>;
+	using drawable_obs  = utils::observer_ptr<drawable>;
 	using drawable_ref  = drawable;
 
 	class owner;
 	using owners_obs = std::vector<   utils::observer_ptr<owner>>;
 	using owners_own = std::vector<std::unique_ptr<owner>>;
 	using owner_own  = std::unique_ptr<owner>;
-	using owner_obs  =    utils::observer_ptr<owner>;
+	using owner_obs  = utils::observer_ptr<owner>;
 	using owner_ref  = owner&;
 
 	class widget;
 	using widgets_obs = std::vector<   utils::observer_ptr<widget>>;
 	using widgets_own = std::vector<std::unique_ptr<widget>>;
 	using widget_own  = std::unique_ptr<widget>;
-	using widget_obs  =    utils::observer_ptr<widget>;
+	using widget_obs  = utils::observer_ptr<widget>;
 	using widget_ref  = widget&;
 
 	enum class orientation_t { hor, ver };
@@ -65,6 +65,29 @@ namespace UI::inner::core
 	inline const utils::graphics::colour::rgba widg_br{0, 1, 0, .8};
 	inline const float finf{std::numeric_limits<float>::infinity()};
 	inline const float fnan{std::numeric_limits<float>::quiet_NaN()};
+
+	struct debug_brushes
+		{
+		debug_brushes(graphics::d2d::brushes& brushes) :
+			elem_bg{brushes.create_solid(UI::inner::core::elem_bg)},
+			elem_br{brushes.create_solid(UI::inner::core::elem_br)},
+			wrap_bg{brushes.create_solid(UI::inner::core::wrap_bg)},
+			wrap_br{brushes.create_solid(UI::inner::core::wrap_br)},
+			cont_bg{brushes.create_solid(UI::inner::core::cont_bg)},
+			cont_br{brushes.create_solid(UI::inner::core::cont_br)},
+			widg_bg{brushes.create_solid(UI::inner::core::widg_bg)},
+			widg_br{brushes.create_solid(UI::inner::core::widg_br)}
+			{}
+
+		graphics::d2d::brushes::handle elem_bg;
+		graphics::d2d::brushes::handle elem_br;
+		graphics::d2d::brushes::handle wrap_bg;
+		graphics::d2d::brushes::handle wrap_br;
+		graphics::d2d::brushes::handle cont_bg;
+		graphics::d2d::brushes::handle cont_br;
+		graphics::d2d::brushes::handle widg_bg;
+		graphics::d2d::brushes::handle widg_br;
+		};
 #pragma endregion Constants
 
 #pragma region inner_types

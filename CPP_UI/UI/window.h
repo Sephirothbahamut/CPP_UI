@@ -1,71 +1,72 @@
 #pragma once
 
+#include <utils/math/math.h>
+
 #include "manager.h"
+#include "../graphics/d2d/render_target.h"
 
 namespace UI::inner
 	{
-	//TODO move to CPP_Utilities
-	template <std::integral T>
-	T cast_clamp(float f)
-		{
-		if (f > static_cast<float>(std::numeric_limits<T>::max())) { return std::numeric_limits<T>::max(); }
-		if (f < static_cast<float>(std::numeric_limits<T>::min())) { return std::numeric_limits<T>::min(); }
-		return static_cast<T>(f);
-		}
 
-	class window : public virtual utils::win32::window::base
+	class window : public utils::MS::window::module
 		{
 		public:
-			std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam)
+			struct create_info
 				{
-				if (!ui_manager_ptr) { return std::nullopt; }
+				using module_type = window;
 
+				core::element_own& ui_root;
+				utils::input::mouse& mouse;
+				graphics::d2d::window& d2d_window_module;
+				};
+
+			window(utils::MS::window::base& base, create_info create_info) :
+				module{base}, 
+				ui_manager{create_info.ui_root, create_info.mouse, create_info.d2d_window_module.get_render_target(), create_info.d2d_window_module.get_render_target().brushes_solid}
+				{}
+
+			virtual utils::MS::window::procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
+				{
 				switch (msg)
 					{
 					case WM_SIZE:
-						ui_manager_ptr->resize(utils::math::vec2u{LOWORD(lparam), HIWORD(lparam)});
-						break;
+						ui_manager.resize(utils::math::vec2u{LOWORD(lparam), HIWORD(lparam)});
+						return utils::MS::window::procedure_result::next(0);
 
-					case WM_NCHITTEST:
-						return hit_test();
+					//case WM_NCHITTEST:
+					//	return hit_test();
 
 					case WM_GETMINMAXINFO:
 						getminmaxinfo(lparam);
-						return 0;
+						return utils::MS::window::procedure_result::stop(0);
 					}
-				return std::nullopt;
+
+				return utils::MS::window::procedure_result::next();
 				}
 
-			void set_ui_manager(manager& manager) noexcept
-				{
-				ui_manager_ptr = &manager; 
-				manager.resize(client_rect.size);
-				}
-
-			void enter_drag_region() noexcept { drag_region = true ; }
-			void leave_drag_region() noexcept { drag_region = false; }
+			const manager& get_manager() const noexcept { return ui_manager; }
+			      manager& get_manager()       noexcept { return ui_manager; }
 
 		private:
-			utils::observer_ptr<UI::inner::manager> ui_manager_ptr{nullptr};
-			bool drag_region{false};
+			manager ui_manager;
 
 			void getminmaxinfo(LPARAM lparam)
 				{
-				auto decorations_size{window_rect.size - client_rect.size};
+				auto decorations_size{get_base().window_rect.size() - get_base().client_rect.size()};
 
-				auto size_min{ui_manager_ptr->get_size_min() + decorations_size};
-				auto size_max{ui_manager_ptr->get_size_max() + decorations_size};
+				auto size_min{ui_manager.get_size_min() + decorations_size};
+				auto size_max{ui_manager.get_size_max() + decorations_size};
 
 				LPMINMAXINFO lpMMI = (LPMINMAXINFO)lparam;
-				lpMMI->ptMinTrackSize.x = cast_clamp<LONG>(size_min.x);
-				lpMMI->ptMinTrackSize.y = cast_clamp<LONG>(size_min.y);
-				lpMMI->ptMaxTrackSize.x = cast_clamp<LONG>(size_max.x);
-				lpMMI->ptMaxTrackSize.y = cast_clamp<LONG>(size_max.y);
+				lpMMI->ptMinTrackSize.x = utils::math::cast_clamp<LONG>(size_min.x);
+				lpMMI->ptMinTrackSize.y = utils::math::cast_clamp<LONG>(size_min.y);
+				lpMMI->ptMaxTrackSize.x = utils::math::cast_clamp<LONG>(size_max.x);
+				lpMMI->ptMaxTrackSize.y = utils::math::cast_clamp<LONG>(size_max.y);
 				}
-			std::optional<LRESULT> hit_test()
-				{
-				if (drag_region) { return utils::win32::window::hit_type::drag; }
-				else { return std::nullopt; }
-				}
+			//std::optional<LRESULT> hit_test()
+			//	{
+			//	if (ui_manager.drag_region) { return utils::MS::window::hit_type::drag; }
+			//	else { return std::nullopt; }
+			//	}
 		};
 	}

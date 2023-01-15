@@ -53,12 +53,12 @@ namespace UI::inner::wrappers
 			virtual void resize(core::vec2f max_size)  final override
 				{
 				core::element::resize_checked(max_size);
-				element->resize(core::wrapper::rect.size - get_padding_aabb_tot(*this));
+				element->resize(core::wrapper::rect.size() - get_padding_aabb_tot(*this));
 				}
 			virtual void reposition(core::vec2f position) noexcept
 				{
 				core::element::reposition(position);
-				element->reposition(core::wrapper::rect.position + core::vec2f{left, top});
+				element->reposition(core::wrapper::rect.position() + core::vec2f{left, top});
 				};
 
 		private:
@@ -79,12 +79,12 @@ namespace UI::inner::wrappers
 			virtual void resize(core::vec2f max_size)  final override
 				{
 				core::element::resize_checked(max_size);
-				element->resize(rect.size - get_padding_aabb_tot(min));
+				element->resize(rect.size() - get_padding_aabb_tot(min));
 				}
 			virtual void reposition(core::vec2f position) noexcept
 				{
 				core::element::reposition(position);
-				element->reposition(rect.position + core::vec2f{min.left, min.top});
+				element->reposition(rect.position() + core::vec2f{min.left, min.top});
 				};
 
 		private:

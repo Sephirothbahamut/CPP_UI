@@ -50,7 +50,7 @@ namespace UI::inner::containers
 			for (size_t i : utils::indices(elements))
 				{
 				auto& element{*elements[i]};
-				element.resize(rect.size);
+				element.resize(rect.size());
 				}
 			}
 		virtual void reposition(core::vec2f position) noexcept
@@ -65,18 +65,18 @@ namespace UI::inner::containers
 				switch (align_horment)
 					{
 					case core::align_hor::left:   x = 0; break;
-					case core::align_hor::center: x = (rect.w / 2.f) - (element.rect.w / 2.f); break;
-					case core::align_hor::right:  x =  rect.w        - element.rect.w;         break;
+					case core::align_hor::center: x = (rect.w() / 2.f) - (element.rect.w() / 2.f); break;
+					case core::align_hor::right:  x =  rect.w()        -  element.rect.w();        break;
 					}
 				float y{0};
 				switch (align_verment)
 					{
 					case core::align_ver::top:    y = 0; break;
-					case core::align_ver::middle: y = (rect.h / 2.f) - (element.rect.h / 2.f); break;
-					case core::align_ver::bottom: y =  rect.h        - element.rect.h;         break;
+					case core::align_ver::middle: y = (rect.h() / 2.f) - (element.rect.h() / 2.f); break;
+					case core::align_ver::bottom: y =  rect.h()        -  element.rect.h();        break;
 					}
 
-				element.reposition({rect.x + x, rect.y + y});
+				element.reposition({rect.x() + x, rect.y() + y});
 				}
 			};
 		};

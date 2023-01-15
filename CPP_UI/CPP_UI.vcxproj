@@ -71,10 +71,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>..\..\..\Libraries\entt\include;..\..\..\Libraries\CPP_Utilities\include;..\..\..\Libraries\CPP_Utilities_Win32\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>..\..\..\Libraries\entt\include;..\..\..\Libraries\CPP_Utilities\include;..\..\..\Libraries\CPP_Utilities_Win32\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -111,6 +111,7 @@
       <PreprocessorDefinitions>WINDOWS_LEAN_AND_MEAN;NOMINMAX;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>..\..\..\Libraries\entt\include;..\..\..\Libraries\CPP_Utilities\include;..\..\..\Libraries\CPP_Utilities_MS\include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -127,6 +128,7 @@
       <PreprocessorDefinitions>WINDOWS_LEAN_AND_MEAN;NOMINMAX;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>..\..\..\Libraries\entt\include;..\..\..\Libraries\CPP_Utilities\include;..\..\..\Libraries\CPP_Utilities_MS\include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -156,6 +158,12 @@
     <ClInclude Include="UI\containers\group_ver.h" />
     <ClInclude Include="UI\core\base_types.h" />
     <ClInclude Include="UI\core\core.h" />
+    <ClInclude Include="UI\drawables.h" />
+    <ClInclude Include="UI\drawables\circ.h" />
+    <ClInclude Include="UI\drawables\common.h" />
+    <ClInclude Include="UI\drawables\image.h" />
+    <ClInclude Include="UI\drawables\rect.h" />
+    <ClInclude Include="UI\drawables\text.h" />
     <ClInclude Include="UI\generation.h" />
     <ClInclude Include="UI\manager.h" />
     <ClInclude Include="UI\UI.h" />

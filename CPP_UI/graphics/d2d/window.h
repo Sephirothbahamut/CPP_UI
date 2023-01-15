@@ -1,7 +1,7 @@
 #pragma once
 
 #include <utils/graphics/colour.h>
-#include <utils/win32/window/window.h>
+#include <utils/MS/window/window.h>
 
 #include "manager.h"
 #include "render_target.h"
@@ -10,25 +10,38 @@ namespace graphics::d2d
 	{
 	class frame;
 
-	class window : public virtual utils::win32::window::base
+	class window : public utils::MS::window::module
 		{
 		friend class frame;
 
 		public:
 			struct create_info
 				{
-				manager& manager;
+				using module_type = window;
+
+				d2d::manager& manager;
 				std::function<void(window&)> on_render;
 				};
 
-			window(create_info create_info) : 
+			window(utils::MS::window::base& base, create_info create_info) :
+				module{base},
 				manager_ptr  {&create_info.manager},
-				render_target{create_info.manager, get_handle()},
+				render_target{create_info.manager, base.get_handle()},
 				on_render    {create_info.on_render}
 				{
 				}
+			frame begin_frame(utils::graphics::colour::rgba clear_colour);
 
-			std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam)
+			std::function<void(window&)> on_render;
+
+			const render_target& get_render_target() const noexcept { return render_target; }
+			      render_target& get_render_target()       noexcept { return render_target; }
+
+		private:
+			utils::observer_ptr<d2d::manager> manager_ptr;
+			render_target render_target;
+
+			virtual utils::MS::window::procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
 				switch (msg)
 					{
@@ -36,6 +49,7 @@ namespace graphics::d2d
 						if (render_target.get())
 							{
 							render_target->Resize(D2D1::SizeU(LOWORD(lparam), HIWORD(lparam)));
+							return utils::MS::window::procedure_result::next(0);
 							}
 						break;
 
@@ -47,23 +61,16 @@ namespace graphics::d2d
 						if (on_render)
 							{
 							on_render(*this);
-							ValidateRect(get_handle(), NULL);
-							return 0;
+							ValidateRect(get_base().get_handle(), NULL);
+							return utils::MS::window::procedure_result::stop(0);
 							}
 						break;
 
 					}
 
-				return std::nullopt;
+				return utils::MS::window::procedure_result::next();
 				}
 
-			frame begin_frame(utils::graphics::colour::rgba clear_colour);
-
-			std::function<void(window&)> on_render;
-
-		private:
-			utils::observer_ptr<manager> manager_ptr;
-			render_target render_target;
 		};
 
 	class frame
@@ -80,7 +87,7 @@ namespace graphics::d2d
 				{
 				if (!window_ptr->render_target.get())
 					{
-					window_ptr->render_target = d2d::render_target{manager, window.get_handle()};
+					window_ptr->render_target = d2d::render_target{manager, window.get_base().get_handle()};
 					}
 
 				window_ptr->render_target->BeginDraw();
@@ -91,7 +98,10 @@ namespace graphics::d2d
 			~frame()
 				{
 				auto hr{window_ptr->render_target->EndDraw()};
-				if (hr == D2DERR_RECREATE_TARGET) { window_ptr->render_target.invalidate(); }
+				if (hr == D2DERR_RECREATE_TARGET) 
+					{
+					window_ptr->render_target.invalidate(); 
+					}
 				}
 
 			render_target& rt() noexcept { return window_ptr->render_target; }

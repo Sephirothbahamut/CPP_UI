@@ -1,8 +1,11 @@
 #pragma once
 
 #include <string>
+#include <optional>
 #include <stdexcept>
+#include <unordered_map>
 
+#include <utils/containers/object_pool.h>
 #include <utils/math/rect.h>
 #include <utils/math/geometry/aabb.h>
 #include <utils/math/geometry/circle.h>
@@ -10,19 +13,67 @@
 
 #include <d2d1.h>
 
-#include "../../graphics/d2d/brush.h"
-#include "../../graphics/d2d/render_target.h"
-
+#include "brush.h"
 #include "details/wrappers/factory.h"
+
+inline std::wstring UTF8_to_wchar(const char* in)
+	{
+	std::wstring out;
+	unsigned int codepoint;
+	while (*in != 0)
+		{
+		unsigned char ch = static_cast<unsigned char>(*in);
+		if (ch <= 0x7f)
+			codepoint = ch;
+		else if (ch <= 0xbf)
+			codepoint = (codepoint << 6) | (ch & 0x3f);
+		else if (ch <= 0xdf)
+			codepoint = ch & 0x1f;
+		else if (ch <= 0xef)
+			codepoint = ch & 0x0f;
+		else
+			codepoint = ch & 0x07;
+		++in;
+		if (((*in & 0xc0) != 0x80) && (codepoint <= 0x10ffff))
+			{
+			if (sizeof(wchar_t) > 2)
+				out.append(1, static_cast<wchar_t>(codepoint));
+			else if (codepoint > 0xffff)
+				{
+				out.append(1, static_cast<wchar_t>(0xd800 + (codepoint >> 10)));
+				out.append(1, static_cast<wchar_t>(0xdc00 + (codepoint & 0x03ff)));
+				}
+			else if (codepoint < 0xd800 || codepoint >= 0xe000)
+				out.append(1, static_cast<wchar_t>(codepoint));
+			}
+		}
+	return out;
+	}
 
 namespace graphics::d2d
 	{
 	class manager;
+	class brushes
+		{
+		using container_t = utils::containers::object_pool<graphics::d2d::brush::solid_color, 8Ui64, false, false, true>;
+		public:
+			using handle = container_t::handle_shared;
+			brushes(graphics::d2d::render_target& rt) :
+				rt_ptr{&rt}
+				{}
+
+			handle create_solid(utils::graphics::colour::rgba rgba);
+
+		private:
+			utils::observer_ptr<graphics::d2d::render_target> rt_ptr;
+
+			container_t container;
+		};
 
 	class render_target
 		{
 		public:
-			render_target(const manager& manager, HWND hwnd)
+			render_target(const manager& manager, HWND hwnd) : brushes_solid{*this}
 				{
 				RECT rc;
 				GetClientRect(hwnd, &rc);
@@ -63,64 +114,14 @@ namespace graphics::d2d
 			ID2D1HwndRenderTarget* operator->() const noexcept { return ID2D1HwndRenderTarget_ptr; }
 			ID2D1HwndRenderTarget* get       () const noexcept { return ID2D1HwndRenderTarget_ptr; }
 
-			struct draw_shape_data
-				{
-				std::optional<utils::graphics::colour::rgba> outline_colour;
-				std::optional<uint32_t> outline_thickness;
-				std::optional<utils::graphics::colour::rgba> fill_colour;
-				};
-
-			//TODO cache brushes
-			void draw(utils::math::geometry::aabb rect, draw_shape_data draw_shape_data)
-				{
-				D2D1_RECT_F d2d_rect{.left{rect.left}, .top{rect.up}, .right{rect.right}, .bottom{rect.bottom}};
-
-
-				if (draw_shape_data.fill_colour)
-					{
-					graphics::d2d::brush::solid_color _brush{*this, draw_shape_data.fill_colour.value()};
-					ID2D1HwndRenderTarget_ptr->FillRectangle(d2d_rect, _brush.get());
-					}
-
-				if (draw_shape_data.outline_colour && draw_shape_data.outline_thickness)
-					{
-					graphics::d2d::brush::solid_color _brush{*this, draw_shape_data.outline_colour.value()};
-
-					ID2D1HwndRenderTarget_ptr->DrawRectangle(d2d_rect, _brush.get(), draw_shape_data.outline_thickness.value());
-					}
-				}
-			void draw(utils::math::geometry::circle circle, draw_shape_data draw_shape_data)
-				{
-				D2D1_ELLIPSE d2d_ellipse{.point{.x{circle.center.x}, .y{circle.center.y}}, .radiusX{circle.radius}, .radiusY{circle.radius}};
-
-				if (draw_shape_data.fill_colour)
-					{
-					graphics::d2d::brush::solid_color _brush{*this, draw_shape_data.fill_colour.value()};
-					ID2D1HwndRenderTarget_ptr->FillEllipse(d2d_ellipse, _brush.get());
-					}
-
-				if (draw_shape_data.outline_colour && draw_shape_data.outline_thickness)
-					{
-					graphics::d2d::brush::solid_color _brush{*this, draw_shape_data.outline_colour.value()};
-
-					ID2D1HwndRenderTarget_ptr->DrawEllipse(d2d_ellipse, _brush.get(), draw_shape_data.outline_thickness.value());
-					}
-				}
+			brushes brushes_solid;
 
 		private:
 			ID2D1HwndRenderTarget* ID2D1HwndRenderTarget_ptr{nullptr};
 		};
-	}
 
-namespace graphics::d2d::brush
-	{
-	inline solid_color::solid_color(render_target& render_target, utils::graphics::colour::rgba rgba)
+	brushes::handle inline brushes::create_solid(utils::graphics::colour::rgba rgba)
 		{
-		D2D1_BRUSH_PROPERTIES bp{.opacity{1}};
-		HRESULT result = render_target->CreateSolidColorBrush(D2D1::ColorF{rgba.r, rgba.g, rgba.b, rgba.a}, bp , &d2d_brush_ptr);
-		if (result != S_OK)
-			{
-			throw std::runtime_error{"Failed to create color brush. Error code: " + std::to_string(result)};
-			}
+		return container.make_shared(*rt_ptr->get(), rgba);
 		}
 	}

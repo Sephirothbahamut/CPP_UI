@@ -4,12 +4,14 @@
 #include <optional>
 
 #include "core/core.h"
-#include "widgets/dummy.h"
+#include "../graphics/d2d/brush.h"
+#include "widgets/window_drag.h"
 
-#include <utils/win32/window/regions.h>
-#include <utils/win32/window/input_system.h>
+#include <utils/MS/window/regions.h>
+#include <utils/input/mouse.h>
 
 namespace UI::inner { class window; }
+namespace UI::inner::widgets { struct window_drag; }
 
 namespace UI::inner
 	{
@@ -18,23 +20,28 @@ namespace UI::inner
 		friend class window;
 
 		public:
-			manager() : manager{std::make_unique<widgets::dummy>()} {}
-			manager(core::element_own&& root) : root{std::move(root)}, drawables{root ? root->get_drawables() : core::drawables_obs{}}
+			manager(core::element_own& root, utils::input::mouse& mouse, graphics::d2d::render_target& rt, graphics::d2d::brushes& brushes) :
+				root{std::move(root)},
+				drawables{this->root->get_drawables()},
+				rt_ptr{&rt},
+				debug_brushes{brushes},
+				input_mouse{*this, mouse}
 				{
-				}
-			void push(core::element_own&& root)
-				{
-				this->root = std::move(root);
-				drawables = root ? root->get_drawables() : core::drawables_obs{};
 				}
 
-			void draw(graphics::d2d::render_target& rt) const noexcept 
+			void draw() const noexcept 
 				{
 				for (const auto& drawable : drawables) 
-					{ drawable->draw(rt); } 
+					{ drawable->draw(*rt_ptr); } 
 				}
-			void debug_draw(graphics::d2d::render_target& rt) const noexcept { root->debug_draw(rt); }
-
+			void debug_draw() const noexcept 
+				{
+				root->debug_draw(*rt_ptr, debug_brushes); 
+				}
+			void debug_drawz() const noexcept
+				{
+				root->debug_drawz(*rt_ptr, debug_brushes);
+				}
 
 			void resize(core::vec2f size) noexcept
 				{
@@ -49,50 +56,78 @@ namespace UI::inner
 			core::element_own root{nullptr};
 			core::drawables_obs drawables;
 
+			utils::observer_ptr<graphics::d2d::render_target> rt_ptr;
+			core::debug_brushes debug_brushes;
+
 #pragma region input
 		private:
-			struct
-				{
-				decltype(utils::input::mouse::move_to_actions    )::handle_raw handle_move_to;
-				decltype(utils::input::mouse::button_down_actions)::handle_raw handle_button_down;
-				decltype(utils::input::mouse::button_up_actions  )::handle_raw handle_button_up;
-				} mouse_events_handles;
+			core::widget_obs hover      {nullptr};
+			core::widget_obs focus      {nullptr};
+			//bool             drag_region{false  };
 
-			core::widget_obs hover{nullptr};
-			core::widget_obs focus{nullptr};
+			class input_mouse
+				{
+				public:
+					input_mouse(manager& manager, utils::input::mouse& mouse) :
+						manager_ptr{&manager},
+						handle_pos{mouse.position.on_changed.make_unique([this](const utils::math::vec2l& position, const utils::math::vec2l&           ) { moved (position ); })},
+						handle_btn{mouse.buttons .on_changed.make_unique([this](const utils::input::mouse::button_id& id, const bool& state, const bool&) { button(id, state); })}
+						{
+						}
 
-			void mouse_move_to(utils::math::vec2l position)
-				{
-				core::widget_obs new_hover{root->get_mouseover(position)};
-				if (new_hover != hover) 
-					{
-					if (hover) { hover->on_mouse_leave(); }
-					if (new_hover) { new_hover->on_mouse_enter(); }
-					hover = new_hover;
-					}
-				}
-			void mouse_button_down(utils::input::mouse::button button)
-				{
-				if (hover != focus)
-					{
-					if (focus) { focus->on_focus_lose(); }
-					if (hover) { hover->on_focus_gain(); }
-					focus = hover;
-					}
-				if (hover) { focus->on_mouse_button_down(button); }
-				}
-			void mouse_button_up(utils::input::mouse::button button)
-				{
-				if (hover) { hover->on_mouse_button_up(button); }
-				}
+				private:
+					utils::observer_ptr<manager> manager_ptr;
 
-		public:
-			void register_mouse_events(utils::input::mouse& mouse) noexcept
-				{
-				mouse_events_handles.handle_move_to     = mouse.move_to_actions    .emplace([this](utils::math::vec2l          position) { mouse_move_to    (position); });
-				mouse_events_handles.handle_button_down = mouse.button_down_actions.emplace([this](utils::input::mouse::button button  ) { mouse_button_down(button  ); });
-				mouse_events_handles.handle_button_up   = mouse.button_up_actions  .emplace([this](utils::input::mouse::button button  ) { mouse_button_up  (button  ); });
-				}
+					decltype(utils::input::mouse::position)::callback_handle_unique handle_pos;
+					decltype(utils::input::mouse::buttons )::callback_handle_unique handle_btn;
+
+
+					void moved(utils::math::vec2l position)
+						{
+						core::widget_obs new_hover{manager_ptr->root->get_mouseover(position)};
+						if (new_hover != manager_ptr->hover)
+							{
+							if (manager_ptr->hover)
+								{
+								manager_ptr->hover->on_mouse_leave();
+								//if (dynamic_cast<utils::observer_ptr<UI::inner::widgets::window_drag>>(manager_ptr->hover))
+								//	{
+								//	manager_ptr->drag_region = false;
+								//	}
+								}
+							if (new_hover)
+								{
+								new_hover->on_mouse_enter();
+								//if (dynamic_cast<utils::observer_ptr<UI::inner::widgets::window_drag>>(new_hover))
+								//	{
+								//	manager_ptr->drag_region = true;
+								//	}
+								}
+							manager_ptr->hover = new_hover;
+							}
+						}
+
+					void button(const utils::input::mouse::button_id& id, const bool& state)
+						{
+						if (state)
+							{
+							if (manager_ptr->hover != manager_ptr->focus)
+								{
+								if (manager_ptr->focus) { manager_ptr->focus->on_focus_lose(); }
+								if (manager_ptr->hover) { manager_ptr->hover->on_focus_gain(); }
+								manager_ptr->focus = manager_ptr->hover;
+								}
+							if (manager_ptr->hover) { manager_ptr->focus->on_mouse_button(id, state); }
+							}
+						else
+							{
+							if (manager_ptr->hover) { manager_ptr->hover->on_mouse_button(id, state); }
+							}
+						}
+
+				} input_mouse;
+			friend class input_mouse;
+
 #pragma endregion input
 		};
 

@@ -108,6 +108,8 @@ namespace graphics::d2d
 				//);
 				}
 
+
+
 		private:
 			details::wrappers::factory factory;
 			Microsoft::WRL::ComPtr<ID3D11Device> d3d_device;

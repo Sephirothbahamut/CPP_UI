@@ -2,30 +2,38 @@
 #include <ranges>
 
 #include <utils/math/geometry/aabb.h>
-#include <utils/win32/window/input_system.h>
-#include <utils/win32/window/regions.h>
+#include <utils/input/mouse.h>
+#include <utils/MS/window/regions.h>
 
 #include "base_types.h"
 
 namespace UI::inner::core
 	{
-
 	class element
 		{
 		public:
 			utils::math::geometry::aabb rect;
 
-			void debug_draw(graphics::d2d::render_target& rt) const noexcept
+			void debug_draw_rect(graphics::d2d::render_target& rt, const graphics::d2d::brush::solid_color& bg, const graphics::d2d::brush::solid_color& br) const noexcept
 				{
-				rt.draw(rect, graphics::d2d::render_target::draw_shape_data{.outline_colour{br()}, .outline_thickness{thickn()}, .fill_colour{bg()}});
+				D2D1_RECT_F d2d_rect{.left{rect.left}, .top{rect.up}, .right{rect.right}, .bottom{rect.bottom}};
 
-				_debug_draw(rt);
+				rt->FillRectangle(d2d_rect, bg.get());
+
+				rt->DrawRectangle(d2d_rect, br.get(), 1);
 				}
 
+			virtual void debug_drawz(graphics::d2d::render_target& rt, const debug_brushes& brushes) const noexcept
+				{
+				}
+			virtual void debug_draw(graphics::d2d::render_target& rt, const debug_brushes& brushes) const noexcept
+				{
+				debug_draw_rect(rt, brushes.elem_bg.value(), brushes.elem_br.value());
+				}
+
+			virtual drawables_obs get_drawables() const noexcept { return {}; };
+
 			virtual widget_obs    get_mouseover(vec2f position) noexcept { return nullptr; }
-			
-			virtual void draw(graphics::d2d::render_target& rt) const noexcept {};
-			virtual drawables_obs get_drawables() const noexcept { return {}; }
 
 			// Dynamic UI
 			void resize_checked(vec2f size)
@@ -44,10 +52,10 @@ namespace UI::inner::core
 					}
 				size.x = std::min(size.x, max_a.x);
 				size.y = std::min(size.y, max_a.y);
-				rect.size = size;
+				rect.size() = size;
 				}
-			virtual void resize(vec2f max_size) { rect.size = max_size; };
-			virtual void reposition(vec2f position) noexcept { rect.position = position; };
+			virtual void resize(vec2f max_size) { rect.size() = max_size; };
+			virtual void reposition(vec2f position) noexcept { rect.position() = position; };
 
 			custom_sizes_t sizes;
 
@@ -69,12 +77,6 @@ namespace UI::inner::core
 			inline constexpr operator bool() const noexcept { return true; }
 
 		protected:
-
-			virtual utils::graphics::colour::rgba bg() const noexcept = 0;
-			virtual utils::graphics::colour::rgba br() const noexcept = 0;
-			virtual float thickn() const noexcept = 0;
-			virtual void _debug_draw(graphics::d2d::render_target& rt) const noexcept {}
-
 			virtual vec2f _get_size_min() const noexcept { return {0.f, 0.f}; }
 			virtual vec2f _get_size_max() const noexcept { return {999.f, 999.f}; }
 			virtual vec2f _get_size_prf() const noexcept
@@ -88,8 +90,14 @@ namespace UI::inner::core
 					};
 				}
 		};
+	class drawable : public virtual element
+		{
+		public:
+			virtual void draw(graphics::d2d::render_target& rt) const noexcept {};
+			virtual drawables_obs get_drawables() const noexcept final override { return {this}; }
+		};
 
-	class owner : public element
+	class owner : public virtual element
 		{
 		public:
 			virtual void push(std::unique_ptr<element>&& element) = 0;
@@ -98,10 +106,17 @@ namespace UI::inner::core
 	class wrapper : public owner
 		{
 		public:
-			virtual drawables_obs get_drawables() const noexcept final override { return element->get_drawables(); }
+			virtual void debug_draw(graphics::d2d::render_target& rt, const debug_brushes& brushes) const noexcept override
+				{
+				debug_draw_rect(rt, brushes.wrap_bg.value(), brushes.wrap_br.value());
+				if (element) { element->debug_draw(rt, brushes); }
+				}
+
+			virtual drawables_obs get_drawables() const noexcept override { if (element) { return element->get_drawables(); } else { return {}; } }
 			virtual widget_obs get_mouseover(vec2f position) noexcept override
 				{
-				return element->get_mouseover(position);
+				if (element) { return element->get_mouseover(position); }
+				else { return nullptr; }
 				}
 
 			template <typename T, typename ...Args>
@@ -117,16 +132,28 @@ namespace UI::inner::core
 
 		protected:
 			element_own element;
-			virtual utils::graphics::colour::rgba bg() const noexcept final override { return wrap_bg; }
-			virtual utils::graphics::colour::rgba br() const noexcept final override { return wrap_br; }
-			virtual float thickn() const noexcept final override { return 2; }
-			virtual void _debug_draw(graphics::d2d::render_target& rt) const noexcept final override { element->debug_draw(rt); }
 		};
 
 	class container : public owner
 		{
 		public:
-			virtual drawables_obs get_drawables() const noexcept final override
+			virtual void debug_drawz(graphics::d2d::render_target& rt, const debug_brushes& brushes) const noexcept override
+				{
+				for (const auto& element_ptr : elements)
+					{
+					element_ptr->debug_draw(rt, brushes);
+					}
+				}
+			virtual void debug_draw(graphics::d2d::render_target& rt, const debug_brushes& brushes) const noexcept override
+				{
+				debug_draw_rect(rt, brushes.cont_bg.value(), brushes.cont_br.value());
+				for (const auto& element_ptr : elements)
+					{
+					element_ptr->debug_draw(rt, brushes);
+					}
+				}
+
+			virtual drawables_obs get_drawables() const noexcept override
 				{
 				drawables_obs ret;
 				for (const auto& element_ptr : elements)
@@ -161,38 +188,53 @@ namespace UI::inner::core
 
 		protected:
 			elements_own elements;
-			virtual utils::graphics::colour::rgba bg() const noexcept final override { return cont_bg; }
-			virtual utils::graphics::colour::rgba br() const noexcept final override { return cont_br; }
-			virtual float thickn() const noexcept final override { return 3; }
-			virtual void _debug_draw(graphics::d2d::render_target& rt) const noexcept final override
-				{
-				for (const auto& element_ptr : elements)
-					{
-					element_ptr->debug_draw(rt);
-					}
-				}
 		};
-
-	class widget : public element
+	
+	class widget : public virtual element
 		{
 		public:
+			virtual void debug_draw(graphics::d2d::render_target& rt, const debug_brushes& brushes) const noexcept override
+				{
+				debug_draw_rect(rt, brushes.widg_bg.value(), brushes.widg_br.value());
+				}
+
 			virtual widget_obs get_mouseover(vec2f position) noexcept override
 				{
 				return rect.contains(position) ? this : nullptr;
 				}
 
-			virtual drawables_obs get_drawables() const noexcept final override { return {this}; }
-
 			virtual void on_focus_gain () {}
 			virtual void on_focus_lose () {}
 			virtual void on_mouse_enter() {}
 			virtual void on_mouse_leave() {}
-			virtual void on_mouse_button_down(utils::input::mouse::button button) {}
-			virtual void on_mouse_button_up  (utils::input::mouse::button button) {}
+			virtual void on_mouse_button(const utils::input::mouse::button_id& id, const bool& state) {}
 
-		private:
-			virtual utils::graphics::colour::rgba bg() const noexcept final override { return widg_bg; }
-			virtual utils::graphics::colour::rgba br() const noexcept final override { return widg_br; }
-			virtual float thickn() const noexcept final override { return 1; }
+		protected:
+		};
+
+	class widget_wrapper : public widget, public wrapper
+		{
+		public:
+			virtual void debug_draw(graphics::d2d::render_target& rt, const debug_brushes& brushes) const noexcept final override
+				{
+				widget::debug_draw(rt, brushes);
+				}
+
+			virtual widget_obs get_mouseover(vec2f position) noexcept override
+				{
+				auto this_mouseover{widget::get_mouseover(position)};
+				if (this_mouseover) { return this_mouseover; }
+				return wrapper::get_mouseover(position);
+				}
+
+			virtual drawables_obs get_drawables() const noexcept final override
+				{
+				drawables_obs ret{widget ::get_drawables()};
+				drawables_obs tmp{wrapper::get_drawables()};
+				ret.insert(ret.end(), tmp.begin(), tmp.end());
+				return ret; 
+				}
+
+		protected:
 		};
 	}

@@ -52,7 +52,7 @@ namespace UI::inner::containers
 				const auto& element{*element_ptr};
 				constraints.emplace_back(constraints_t::hor(element));
 				}
-			auto sizes{calc_sizes({rect.width, rect.height}, constraints)};
+			auto sizes{calc_sizes({rect.width(), rect.height()}, constraints)};
 
 			for (size_t i : utils::indices(elements))
 				{
@@ -73,12 +73,12 @@ namespace UI::inner::containers
 				switch (alignment)
 					{
 					case core::align_ver::top:    y = 0; break;
-					case core::align_ver::middle: y = (rect.h / 2.f) - (element.rect.h / 2.f); break;
-					case core::align_ver::bottom: y =  rect.h        - element.rect.h;         break;
+					case core::align_ver::middle: y = (rect.h() / 2.f) - (element.rect.h() / 2.f); break;
+					case core::align_ver::bottom: y =  rect.h()        -  element.rect.h();        break;
 					}
 
-				element.reposition({rect.x + x, rect.y + y});
-				x += element_ptr->rect.width;
+				element.reposition({rect.x() + x, rect.y() + y});
+				x += element_ptr->rect.width();
 				}
 			};
 		};
