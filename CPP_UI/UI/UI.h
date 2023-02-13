@@ -32,6 +32,10 @@ namespace UI
 		using button      = inner::widgets::button;
 		using window_drag = inner::widgets::window_drag;
 		}
+	namespace drawables
+		{
+		using text = inner::drawables::text;
+		}
 	namespace generation
 		{
 		template <std::derived_from<inner::core::element> T>
@@ -41,8 +45,9 @@ namespace UI
 		using spawner = inner::generation::spawner<T>;
 		}
 
-	using manager = inner::manager;
-	using window  = inner::window;
+	using initializer = inner::initializer;
+	using manager     = inner::manager;
+	using window      = inner::window;
 
 	namespace all
 		{

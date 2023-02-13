@@ -14,21 +14,18 @@ namespace UI::inner::core
 		public:
 			utils::math::geometry::aabb rect;
 
-			void debug_draw_rect(graphics::d2d::render_target& rt, const graphics::d2d::brush::solid_color& bg, const graphics::d2d::brush::solid_color& br) const noexcept
+			void debug_draw_rect(const utils::MS::graphics::d2d::device_context& context, const utils::MS::graphics::d2d::solid_brush& bg, const utils::MS::graphics::d2d::solid_brush& br) const noexcept
 				{
 				D2D1_RECT_F d2d_rect{.left{rect.left}, .top{rect.up}, .right{rect.right}, .bottom{rect.bottom}};
 
-				rt->FillRectangle(d2d_rect, bg.get());
+				context->FillRectangle(d2d_rect, bg.get());
 
-				rt->DrawRectangle(d2d_rect, br.get(), 1);
+				context->DrawRectangle(d2d_rect, br.get(), 1);
 				}
 
-			virtual void debug_drawz(graphics::d2d::render_target& rt, const debug_brushes& brushes) const noexcept
+			virtual void debug_draw(const utils::MS::graphics::d2d::device_context& context, const debug_brushes& brushes) const noexcept
 				{
-				}
-			virtual void debug_draw(graphics::d2d::render_target& rt, const debug_brushes& brushes) const noexcept
-				{
-				debug_draw_rect(rt, brushes.elem_bg.value(), brushes.elem_br.value());
+				debug_draw_rect(context, brushes.elem_bg, brushes.elem_br);
 				}
 
 			virtual drawables_obs get_drawables() const noexcept { return {}; };
@@ -52,10 +49,10 @@ namespace UI::inner::core
 					}
 				size.x = std::min(size.x, max_a.x);
 				size.y = std::min(size.y, max_a.y);
-				rect.size() = size;
+				resize(size);
 				}
-			virtual void resize(vec2f max_size) { rect.size() = max_size; };
-			virtual void reposition(vec2f position) noexcept { rect.position() = position; };
+			void resize    (vec2f max_size)          { rect.size    () = max_size; on_resize    (); };
+			void reposition(vec2f position) noexcept { rect.position() = position; on_reposition(); };
 
 			custom_sizes_t sizes;
 
@@ -89,11 +86,14 @@ namespace UI::inner::core
 					max.y == finf ? std::max(/***/64.f, min.y) : min.y + ((max.y - min.y) / 2.f)
 					};
 				}
+
+			virtual void on_resize    () {}
+			virtual void on_reposition() {}
 		};
 	class drawable : public virtual element
 		{
 		public:
-			virtual void draw(graphics::d2d::render_target& rt) const noexcept {};
+			virtual void draw(const utils::MS::graphics::d2d::device_context& context) const noexcept {};
 			virtual drawables_obs get_drawables() const noexcept final override { return {this}; }
 		};
 
@@ -106,10 +106,10 @@ namespace UI::inner::core
 	class wrapper : public owner
 		{
 		public:
-			virtual void debug_draw(graphics::d2d::render_target& rt, const debug_brushes& brushes) const noexcept override
+			virtual void debug_draw(const utils::MS::graphics::d2d::device_context& context, const debug_brushes& brushes) const noexcept override
 				{
-				debug_draw_rect(rt, brushes.wrap_bg.value(), brushes.wrap_br.value());
-				if (element) { element->debug_draw(rt, brushes); }
+				debug_draw_rect(context, brushes.wrap_bg, brushes.wrap_br);
+				if (element) { element->debug_draw(context, brushes); }
 				}
 
 			virtual drawables_obs get_drawables() const noexcept override { if (element) { return element->get_drawables(); } else { return {}; } }
@@ -137,19 +137,12 @@ namespace UI::inner::core
 	class container : public owner
 		{
 		public:
-			virtual void debug_drawz(graphics::d2d::render_target& rt, const debug_brushes& brushes) const noexcept override
+			virtual void debug_draw(const utils::MS::graphics::d2d::device_context& context, const debug_brushes& brushes) const noexcept override
 				{
+				debug_draw_rect(context, brushes.cont_bg, brushes.cont_br);
 				for (const auto& element_ptr : elements)
 					{
-					element_ptr->debug_draw(rt, brushes);
-					}
-				}
-			virtual void debug_draw(graphics::d2d::render_target& rt, const debug_brushes& brushes) const noexcept override
-				{
-				debug_draw_rect(rt, brushes.cont_bg.value(), brushes.cont_br.value());
-				for (const auto& element_ptr : elements)
-					{
-					element_ptr->debug_draw(rt, brushes);
+					element_ptr->debug_draw(context, brushes);
 					}
 				}
 
@@ -193,9 +186,9 @@ namespace UI::inner::core
 	class widget : public virtual element
 		{
 		public:
-			virtual void debug_draw(graphics::d2d::render_target& rt, const debug_brushes& brushes) const noexcept override
+			virtual void debug_draw(const utils::MS::graphics::d2d::device_context& context, const debug_brushes& brushes) const noexcept override
 				{
-				debug_draw_rect(rt, brushes.widg_bg.value(), brushes.widg_br.value());
+				debug_draw_rect(context, brushes.widg_bg, brushes.widg_br);
 				}
 
 			virtual widget_obs get_mouseover(vec2f position) noexcept override
@@ -215,9 +208,9 @@ namespace UI::inner::core
 	class widget_wrapper : public widget, public wrapper
 		{
 		public:
-			virtual void debug_draw(graphics::d2d::render_target& rt, const debug_brushes& brushes) const noexcept final override
+			virtual void debug_draw(const utils::MS::graphics::d2d::device_context& context, const debug_brushes& brushes) const noexcept final override
 				{
-				widget::debug_draw(rt, brushes);
+				widget::debug_draw(context, brushes);
 				}
 
 			virtual widget_obs get_mouseover(vec2f position) noexcept override

@@ -3,7 +3,6 @@
 #include <utils/math/math.h>
 
 #include "manager.h"
-#include "../graphics/d2d/render_target.h"
 
 namespace UI::inner
 	{
@@ -15,47 +14,47 @@ namespace UI::inner
 				{
 				using module_type = window;
 
-				core::element_own& ui_root;
-				utils::input::mouse& mouse;
-				graphics::d2d::window& d2d_window_module;
+				utils::observer_ptr<manager> manager_ptr{nullptr};
 				};
 
-			window(utils::MS::window::base& base, create_info create_info) :
+			window(utils::MS::window::base& base, const create_info& create_info = {}) :
 				module{base}, 
-				ui_manager{create_info.ui_root, create_info.mouse, create_info.d2d_window_module.get_render_target(), create_info.d2d_window_module.get_render_target().brushes_solid}
+				ui_manager_ptr{create_info.manager_ptr}
 				{}
 
 			virtual utils::MS::window::procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
-				switch (msg)
+				if (ui_manager_ptr)
 					{
-					case WM_SIZE:
-						ui_manager.resize(utils::math::vec2u{LOWORD(lparam), HIWORD(lparam)});
-						return utils::MS::window::procedure_result::next(0);
+					switch (msg)
+						{
+						case WM_SIZE:
+							ui_manager_ptr->resize(utils::math::vec2u{LOWORD(lparam), HIWORD(lparam)});
+							return utils::MS::window::procedure_result::next(0);
 
-					//case WM_NCHITTEST:
-					//	return hit_test();
+						//case WM_NCHITTEST:
+							//	return hit_test();
 
-					case WM_GETMINMAXINFO:
-						getminmaxinfo(lparam);
-						return utils::MS::window::procedure_result::stop(0);
+						case WM_GETMINMAXINFO:
+							getminmaxinfo(lparam);
+							return utils::MS::window::procedure_result::stop(0);
+						}
 					}
-
 				return utils::MS::window::procedure_result::next();
 				}
 
-			const manager& get_manager() const noexcept { return ui_manager; }
-			      manager& get_manager()       noexcept { return ui_manager; }
+			const manager& get_manager() const noexcept { return *ui_manager_ptr; }
+			      manager& get_manager()       noexcept { return *ui_manager_ptr; }
+
+			utils::observer_ptr<manager> ui_manager_ptr{nullptr};
 
 		private:
-			manager ui_manager;
-
 			void getminmaxinfo(LPARAM lparam)
 				{
 				auto decorations_size{get_base().window_rect.size() - get_base().client_rect.size()};
 
-				auto size_min{ui_manager.get_size_min() + decorations_size};
-				auto size_max{ui_manager.get_size_max() + decorations_size};
+				auto size_min{ui_manager_ptr->get_size_min() + decorations_size};
+				auto size_max{ui_manager_ptr->get_size_max() + decorations_size};
 
 				LPMINMAXINFO lpMMI = (LPMINMAXINFO)lparam;
 				lpMMI->ptMinTrackSize.x = utils::math::cast_clamp<LONG>(size_min.x);

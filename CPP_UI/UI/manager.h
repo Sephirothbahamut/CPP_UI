@@ -4,7 +4,7 @@
 #include <optional>
 
 #include "core/core.h"
-#include "../graphics/d2d/brush.h"
+#include "initializer.h"
 #include "widgets/window_drag.h"
 
 #include <utils/MS/window/regions.h>
@@ -20,44 +20,37 @@ namespace UI::inner
 		friend class window;
 
 		public:
-			manager(core::element_own& root, utils::input::mouse& mouse, graphics::d2d::render_target& rt, graphics::d2d::brushes& brushes) :
+			manager(const initializer& initializer, core::element_own&& root, utils::input::mouse& mouse) :
+				initializer_ptr{&initializer},
 				root{std::move(root)},
 				drawables{this->root->get_drawables()},
-				rt_ptr{&rt},
-				debug_brushes{brushes},
 				input_mouse{*this, mouse}
 				{
 				}
 
-			void draw() const noexcept 
+			void draw(const utils::MS::graphics::d2d::device_context& context) const noexcept
 				{
 				for (const auto& drawable : drawables) 
-					{ drawable->draw(*rt_ptr); } 
+					{ drawable->draw(context); }
 				}
-			void debug_draw() const noexcept 
+			void debug_draw(const utils::MS::graphics::d2d::device_context& context) const noexcept
 				{
-				root->debug_draw(*rt_ptr, debug_brushes); 
-				}
-			void debug_drawz() const noexcept
-				{
-				root->debug_drawz(*rt_ptr, debug_brushes);
+				root->debug_draw(context, initializer_ptr->debug_brushes);
 				}
 
 			void resize(core::vec2f size) noexcept
 				{
 				root->resize    (size);
-				root->reposition(root->rect.ul);
+				root->reposition(root->rect.ul());
 				}
 
 			core::vec2f get_size_min() const noexcept { return root->get_size_min(); }
 			core::vec2f get_size_max() const noexcept { return root->get_size_max(); }
 
 		private:
+			utils::observer_ptr<const initializer> initializer_ptr;
 			core::element_own root{nullptr};
 			core::drawables_obs drawables;
-
-			utils::observer_ptr<graphics::d2d::render_target> rt_ptr;
-			core::debug_brushes debug_brushes;
 
 #pragma region input
 		private:
@@ -80,7 +73,6 @@ namespace UI::inner
 
 					decltype(utils::input::mouse::position)::callback_handle_unique handle_pos;
 					decltype(utils::input::mouse::buttons )::callback_handle_unique handle_btn;
-
 
 					void moved(utils::math::vec2l position)
 						{

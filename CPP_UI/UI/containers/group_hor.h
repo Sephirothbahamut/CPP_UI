@@ -42,10 +42,8 @@ namespace UI::inner::containers
 			return ret;
 			}
 
-		virtual void resize(core::vec2f max_size)  final override
+		virtual void on_resize() final override
 			{
-			core::element::resize_checked(max_size);
-
 			std::vector<constraints_t> constraints; constraints.reserve(elements.size());
 			for (const auto& element_ptr : elements)
 				{
@@ -61,10 +59,8 @@ namespace UI::inner::containers
 				element.resize({size.first, size.second});
 				}
 			}
-		virtual void reposition(core::vec2f position) noexcept
+		virtual void on_reposition() noexcept
 			{
-			core::element::reposition(position);
-
 			float x{0};
 			for (auto& element_ptr : elements)
 				{

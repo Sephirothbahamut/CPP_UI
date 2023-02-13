@@ -11,7 +11,7 @@ namespace UI::inner::drawables
 	{
 	struct circ : shape
 		{
-		virtual void draw(graphics::d2d::render_target& rt) const noexcept override
+		virtual void draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
 			{
 			//float radius = std::min(rect.width, rect.height) / 2.f;
 			//utils::math::geometry::circle circle{.center{rect.center}, .radius{radius}};

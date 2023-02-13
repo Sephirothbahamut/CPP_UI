@@ -16,12 +16,6 @@
     <Filter Include="Header Files\graphics">
       <UniqueIdentifier>{21734273-15a9-4129-af21-52cea1dab9d7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\graphics\d2d">
-      <UniqueIdentifier>{722a6899-0aed-4e50-9d82-79882d4ad410}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\graphics\d2d\details">
-      <UniqueIdentifier>{e102635b-9e8b-41dd-8285-4ed7dd4fbd87}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\UI">
       <UniqueIdentifier>{a8290262-d2e5-40d0-83f1-215c27a47937}</UniqueIdentifier>
     </Filter>
@@ -40,9 +34,6 @@
     <Filter Include="Header Files\resources">
       <UniqueIdentifier>{d5ed12ea-8893-4e2d-8fb4-fba751c9de97}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\graphics\d2d\details\wrappers">
-      <UniqueIdentifier>{13da6694-e822-4cf8-b761-c300cfb2960d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\UI\drawables">
       <UniqueIdentifier>{50600822-17db-4ff6-b5e2-45fa7cdaa448}</UniqueIdentifier>
     </Filter>
@@ -53,21 +44,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="graphics\d2d\brush.h">
-      <Filter>Header Files\graphics\d2d</Filter>
-    </ClInclude>
-    <ClInclude Include="graphics\d2d\manager.h">
-      <Filter>Header Files\graphics\d2d</Filter>
-    </ClInclude>
-    <ClInclude Include="graphics\d2d\render_target.h">
-      <Filter>Header Files\graphics\d2d</Filter>
-    </ClInclude>
-    <ClInclude Include="graphics\d2d\window.h">
-      <Filter>Header Files\graphics\d2d</Filter>
-    </ClInclude>
-    <ClInclude Include="graphics\d2d\details\memory.h">
-      <Filter>Header Files\graphics\d2d\details</Filter>
-    </ClInclude>
     <ClInclude Include="UI\containers.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
@@ -116,9 +92,6 @@
     <ClInclude Include="UI\wrappers\padding.h">
       <Filter>Header Files\UI\wrappers</Filter>
     </ClInclude>
-    <ClInclude Include="graphics\d2d\draw.h">
-      <Filter>Header Files\graphics\d2d</Filter>
-    </ClInclude>
     <ClInclude Include="resources\asset_manager.h">
       <Filter>Header Files\resources</Filter>
     </ClInclude>
@@ -130,9 +103,6 @@
     </ClInclude>
     <ClInclude Include="UI\widgets\button.h">
       <Filter>Header Files\UI\widgets</Filter>
-    </ClInclude>
-    <ClInclude Include="graphics\d2d\details\wrappers\factory.h">
-      <Filter>Header Files\graphics\d2d\details\wrappers</Filter>
     </ClInclude>
     <ClInclude Include="UI\window.h">
       <Filter>Header Files\UI</Filter>
@@ -154,6 +124,12 @@
     </ClInclude>
     <ClInclude Include="UI\drawables\common.h">
       <Filter>Header Files\UI\drawables</Filter>
+    </ClInclude>
+    <ClInclude Include="graphics\manager.h">
+      <Filter>Header Files\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\initializer.h">
+      <Filter>Header Files\UI</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

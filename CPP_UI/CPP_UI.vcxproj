@@ -142,13 +142,7 @@
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="graphics\d2d\brush.h" />
-    <ClInclude Include="graphics\d2d\details\memory.h" />
-    <ClInclude Include="graphics\d2d\details\wrappers\factory.h" />
-    <ClInclude Include="graphics\d2d\draw.h" />
-    <ClInclude Include="graphics\d2d\manager.h" />
-    <ClInclude Include="graphics\d2d\render_target.h" />
-    <ClInclude Include="graphics\d2d\window.h" />
+    <ClInclude Include="graphics\manager.h" />
     <ClInclude Include="resources\assets_manager.h" />
     <ClInclude Include="resources\asset_manager.h" />
     <ClInclude Include="UI\containers.h" />
@@ -165,6 +159,7 @@
     <ClInclude Include="UI\drawables\rect.h" />
     <ClInclude Include="UI\drawables\text.h" />
     <ClInclude Include="UI\generation.h" />
+    <ClInclude Include="UI\initializer.h" />
     <ClInclude Include="UI\manager.h" />
     <ClInclude Include="UI\UI.h" />
     <ClInclude Include="UI\widgets.h" />

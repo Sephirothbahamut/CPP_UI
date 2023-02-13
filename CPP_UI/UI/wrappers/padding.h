@@ -50,14 +50,12 @@ namespace UI::inner::wrappers
 			virtual core::vec2f _get_size_prf() const noexcept final override { return element->get_size_prf() + get_padding_aabb_tot(*this); }
 			virtual core::vec2f _get_size_max() const noexcept final override { return element->get_size_max() + get_padding_aabb_tot(*this); }
 
-			virtual void resize(core::vec2f max_size)  final override
+			virtual void on_resize()  final override
 				{
-				core::element::resize_checked(max_size);
 				element->resize(core::wrapper::rect.size() - get_padding_aabb_tot(*this));
 				}
-			virtual void reposition(core::vec2f position) noexcept
+			virtual void on_reposition() noexcept
 				{
-				core::element::reposition(position);
 				element->reposition(core::wrapper::rect.position() + core::vec2f{left, top});
 				};
 
@@ -76,14 +74,12 @@ namespace UI::inner::wrappers
 			virtual core::vec2f _get_size_max() const noexcept final override { return element->get_size_max() + get_padding_aabb_tot(max); }
 
 			//TODO
-			virtual void resize(core::vec2f max_size)  final override
+			virtual void on_resize()  final override
 				{
-				core::element::resize_checked(max_size);
 				element->resize(rect.size() - get_padding_aabb_tot(min));
 				}
-			virtual void reposition(core::vec2f position) noexcept
+			virtual void on_reposition() noexcept
 				{
-				core::element::reposition(position);
 				element->reposition(rect.position() + core::vec2f{min.left, min.top});
 				};
 

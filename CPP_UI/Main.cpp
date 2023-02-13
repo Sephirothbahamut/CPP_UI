@@ -4,12 +4,11 @@
 #include <utils/MS/window/snap_on_drag.h>
 #include <utils/MS/window/input/mouse.h>
 
-#include "graphics/d2d/window.h"
-#include "graphics/d2d/brush.h"
+#include <utils/MS/graphics/d2d/window.h>
 
 #include "UI/UI.h"
 
-UI::core::element_own title_bar(utils::MS::window::base& window)
+UI::core::element_own title_bar(utils::MS::window::base& window, utils::MS::graphics::dw::factory dw_factory, utils::MS::graphics::dw::text_format format, utils::MS::graphics::d2d::solid_brush brush, const std::wstring& string)
 	{
 	auto root{std::make_unique<UI::containers::stack>()};
 
@@ -20,6 +19,7 @@ UI::core::element_own title_bar(utils::MS::window::base& window)
 		}
 	if (auto& buttons_bar{root->emplace<UI::containers::group_hor>()})
 		{
+		buttons_bar.emplace<UI::drawables::text>(dw_factory, format, brush, string);
 		buttons_bar.emplace<UI::widgets::spacer>();
 		if (auto & button{buttons_bar.emplace<UI::widgets::button>([&window]() { window.minimize(); })})
 			{
@@ -44,12 +44,12 @@ UI::core::element_own title_bar(utils::MS::window::base& window)
 	return std::move(root);
 	}
 
-UI::core::element_own sample_ui(utils::MS::window::base& window)
+UI::core::element_own sample_ui(utils::MS::window::base& window, utils::MS::graphics::dw::factory dw_factory, utils::MS::graphics::dw::text_format format, utils::MS::graphics::d2d::solid_brush brush, const std::wstring& string)
 	{
 	auto root{std::make_unique<UI::containers::group_ver>()};
 	root->alignment = UI::align_hor::left;
 
-	root->push(title_bar(window));
+	root->push(title_bar(window, dw_factory, format, brush, string));
 
 	if (auto & top{root->emplace<UI::containers::group_hor>()})
 		{
@@ -185,9 +185,17 @@ int main()
 
 
 	// Setup rendering
-	graphics::d2d::manager d2d_manager;
+	utils::MS::graphics::co  ::initializer    co_initializer;
+	utils::MS::graphics::d3d ::device         d3d_device;
+	utils::MS::graphics::dxgi::device         dxgi_device{d3d_device};
+	utils::MS::graphics::d2d ::factory        d2d_factory;
+	utils::MS::graphics::d2d ::device         d2d_device{d2d_factory, dxgi_device};
+	utils::MS::graphics::d2d ::device_context d2d_context{d2d_device};
+	utils::MS::graphics::dw  ::factory        dw_factory;
+	utils::MS::graphics::composition::device  composition_device{dxgi_device};
+	UI::initializer ui_initializer{d2d_context};
 
-	utils::containers::object_pool<std::function<void(graphics::d2d::frame&)>> draw_operations;
+	utils::containers::object_pool<std::function<void(const utils::MS::graphics::d2d::device_context&)>> draw_operations;
 
 	// Setup window 
 	utils::MS::window::initializer window_initializer;
@@ -209,70 +217,102 @@ int main()
 			{
 			.thickness{8}
 			},
-		graphics::d2d::window::create_info
+		//utils::MS::graphics::d2d::window::composition_swap_chain::create_info
+		//	{
+		//	.d2d_device{d2d_device},
+		//	.on_render{[&](utils::MS::window::base& base, const utils::MS::graphics::d2d::device_context& context)
+		//		{
+		//		context->SetTransform(D2D1::IdentityMatrix());
+		//		context->Clear(D2D1_COLOR_F{0.f, 0.f, 0.f, 0.f});
+		//
+		//		for (const auto& draw_operation : draw_operations)
+		//			{
+		//			draw_operation(context);
+		//			}
+		//		}}
+		//	},
+		utils::MS::graphics::d2d::window::render_target::create_info
 			{
-			.manager{d2d_manager},
-			.on_render{[&](graphics::d2d::window& windowd)
+			.d2d_factory{d2d_factory},
+			.on_render{[&](utils::MS::window::base& base, const utils::MS::graphics::d2d::device_context& context)
 				{
-				auto frame{windowd.begin_frame({.1f, .1f, .1f, 0.f})};
-				frame.rt()->Clear(D2D1_COLOR_F{.r{0.f}, .g{0.f}, .b{1.f}, .a{.5f}});
+				context->SetTransform(D2D1::IdentityMatrix());
+				context->Clear(D2D1_COLOR_F{0.f, 0.f, 0.f, 0.f});
+		
 				for (const auto& draw_operation : draw_operations)
 					{
-					draw_operation(frame);
+					draw_operation(context);
 					}
 				}}
 			},
+		//utils::MS::graphics::d2d::window::swap_chain::create_info
+		//	{
+		//	.d2d_device{d2d_device},
+		//	.on_render{[&](utils::MS::window::base& base, const utils::MS::graphics::d2d::device_context& context)
+		//		{
+		//		context->SetTransform(D2D1::IdentityMatrix());
+		//		context->Clear(D2D1_COLOR_F{0.f, 0.f, 0.f, 0.f});
+		//
+		//		for (const auto& draw_operation : draw_operations)
+		//			{
+		//			draw_operation(context);
+		//			}
+		//		}}
+		//	},
 		utils::MS::window::input::mouse::create_info{}
 		};
 
-	auto ui_root{sample_ui(window)};
-	UI::window::create_info ui_create_info
-		{
-		.ui_root{ui_root},
-		.mouse{window.get_module_ptr<utils::MS::window::input::mouse>()->default_mouse},
-		.d2d_window_module{*window.get_module_ptr<graphics::d2d::window>()},
-		};
+	auto& default_mouse{window.get_module_ptr<utils::MS::window::input::mouse>()->default_mouse};
 
-	auto& window_ui{window.emplace_module_from_create_info(ui_create_info)};
+	//UI resources
+	utils::MS::graphics::dw::text_format font_format{dw_factory, utils::MS::graphics::dw::text_format::create_info
+		{
+		.name{L"Gabriola"},
+		.size{16},
+		.locale{L"en-gb"}
+		}};
+	utils::MS::graphics::d2d::solid_brush font_color{d2d_context, utils::graphics::colour::rgba_f{0.f, 0.f, 0.f, 1.f}};
+
+	UI::manager ui_manager{ui_initializer, sample_ui(window, dw_factory, font_format, font_color, L"Donald Fauntleroy Duck"), default_mouse};
+
+	auto& window_ui{window.emplace_module_from_create_info(UI::window::create_info{.manager_ptr{&ui_manager}})};
 
 	// Background grid
-	draw_operations.emplace([&window](graphics::d2d::frame& frame)
+	draw_operations.emplace([&window](const utils::MS::graphics::d2d::device_context& context)
 		{
 		// Draw a grid background.
-		auto brush_handle{frame.rt().brushes_solid.create_solid(utils::graphics::colour::rgba{0, 1, 0})};
+		utils::MS::graphics::d2d::solid_brush brush{context, utils::graphics::colour::rgba_f{0.f, 1.f, 0.f, 1.f}};
 		
-		int width  = static_cast<int>(window.client_rect.width ());
-		int height = static_cast<int>(window.client_rect.height());
+		utils::math::vec2f sizef{static_cast<utils::math::vec2l>(window.client_rect.size())};
 		
-		for (int x = 0; x < width; x += 10)
+		for (float x = 0.f; x < sizef.x; x += 10.f)
 			{
-			frame.rt()->DrawLine
-			(
-				D2D1::Point2F(static_cast<FLOAT>(x), static_cast<FLOAT>(0.0f  )),
-				D2D1::Point2F(static_cast<FLOAT>(x), static_cast<FLOAT>(height)),
-				brush_handle->get(),
+			context->DrawLine
+				(
+				D2D1::Point2F(x, 0.0f   ),
+				D2D1::Point2F(x, sizef.y),
+				brush.get(),
 				0.5f
-			);
+				);
 			}
-		
-		for (int y = 0; y < height; y += 10)
+		for (float y = 0.f; y < sizef.y; y += 10.f)
 			{
-			frame.rt()->DrawLine
-			(
-				D2D1::Point2F(static_cast<FLOAT>(0.0f ), static_cast<FLOAT>(y)),
-				D2D1::Point2F(static_cast<FLOAT>(width), static_cast<FLOAT>(y)),
-				brush_handle->get(),
+			context->DrawLine
+				(
+				D2D1::Point2F(0.0f   , y),
+				D2D1::Point2F(sizef.x, y),
+				brush.get(),
 				0.5f
-			);
+				);
 			}
 		});
 
 	//Setup UI
 
-	draw_operations.emplace([&window_ui](graphics::d2d::frame& frame)
+	draw_operations.emplace([&ui_manager](const utils::MS::graphics::d2d::device_context& context)
 		{
-		window_ui.get_manager().debug_drawz();
-		window_ui.get_manager().draw();
+		ui_manager.debug_draw(context);
+		ui_manager.draw(context);
 		});
 
 	window.show();

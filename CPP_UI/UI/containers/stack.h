@@ -43,20 +43,16 @@ namespace UI::inner::containers
 			return ret;
 			}
 
-		virtual void resize(core::vec2f max_size)  final override
+		virtual void on_resize()  final override
 			{
-			core::element::resize_checked(max_size);
-
 			for (size_t i : utils::indices(elements))
 				{
 				auto& element{*elements[i]};
 				element.resize(rect.size());
 				}
 			}
-		virtual void reposition(core::vec2f position) noexcept
+		virtual void on_reposition() noexcept
 			{
-			core::element::reposition(position);
-
 			for (auto& element_ptr : elements)
 				{
 				auto& element{*element_ptr};

@@ -12,7 +12,7 @@
 #include <utils/math/vec2.h>
 #include <utils/graphics/colour.h>
 
-#include "../../graphics/d2d/render_target.h"
+#include <utils/MS/graphics/d2d.h>
 
 namespace UI::inner::core
 	{
@@ -68,25 +68,25 @@ namespace UI::inner::core
 
 	struct debug_brushes
 		{
-		debug_brushes(graphics::d2d::brushes& brushes) :
-			elem_bg{brushes.create_solid(UI::inner::core::elem_bg)},
-			elem_br{brushes.create_solid(UI::inner::core::elem_br)},
-			wrap_bg{brushes.create_solid(UI::inner::core::wrap_bg)},
-			wrap_br{brushes.create_solid(UI::inner::core::wrap_br)},
-			cont_bg{brushes.create_solid(UI::inner::core::cont_bg)},
-			cont_br{brushes.create_solid(UI::inner::core::cont_br)},
-			widg_bg{brushes.create_solid(UI::inner::core::widg_bg)},
-			widg_br{brushes.create_solid(UI::inner::core::widg_br)}
+		debug_brushes(const utils::MS::graphics::d2d::device_context& context) :
+			elem_bg{context, UI::inner::core::elem_bg},
+			elem_br{context, UI::inner::core::elem_br},
+			wrap_bg{context, UI::inner::core::wrap_bg},
+			wrap_br{context, UI::inner::core::wrap_br},
+			cont_bg{context, UI::inner::core::cont_bg},
+			cont_br{context, UI::inner::core::cont_br},
+			widg_bg{context, UI::inner::core::widg_bg},
+			widg_br{context, UI::inner::core::widg_br}
 			{}
 
-		graphics::d2d::brushes::handle elem_bg;
-		graphics::d2d::brushes::handle elem_br;
-		graphics::d2d::brushes::handle wrap_bg;
-		graphics::d2d::brushes::handle wrap_br;
-		graphics::d2d::brushes::handle cont_bg;
-		graphics::d2d::brushes::handle cont_br;
-		graphics::d2d::brushes::handle widg_bg;
-		graphics::d2d::brushes::handle widg_br;
+		utils::MS::graphics::d2d::solid_brush elem_bg;
+		utils::MS::graphics::d2d::solid_brush elem_br;
+		utils::MS::graphics::d2d::solid_brush wrap_bg;
+		utils::MS::graphics::d2d::solid_brush wrap_br;
+		utils::MS::graphics::d2d::solid_brush cont_bg;
+		utils::MS::graphics::d2d::solid_brush cont_br;
+		utils::MS::graphics::d2d::solid_brush widg_bg;
+		utils::MS::graphics::d2d::solid_brush widg_br;
 		};
 #pragma endregion Constants
 
