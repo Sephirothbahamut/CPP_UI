@@ -4,117 +4,138 @@
 
 #include "../core/core.h"
 
-namespace UI::inner::containers
+namespace UI::inner::containers::details
 	{
-	struct constraints_t
+	struct constraints_t 
 		{
-		float min_a{0.f};
-		float prf_a{0.f};
-		float max_a{0.f};
-		float min_b{0.f};
-		float prf_b{0.f};
-		float max_b{0.f};
+		public:
+			float min;
+			float prf;
+			float max;
+			float max_finite;
 
-		static constraints_t hor(const core::element& element)
-			{
-			core::vec2f min{element.get_size_min()};
-			core::vec2f prf{element.get_size_prf()};
-			core::vec2f max{element.get_size_max()};
-			return {min.x, prf.x, max.x, min.y, prf.y, max.y};
-			}
+			static constraints_t hor(const core::element& element) noexcept
+				{
+				return 
+					{
+					element.get_size_min().x,
+					element.get_size_prf().x,
+					element.get_size_max().x
+					};
+				}
 
-		static constraints_t ver(const core::element& element)
-			{
-			core::vec2f min{element.get_size_min()};
-			core::vec2f prf{element.get_size_prf()};
-			core::vec2f max{element.get_size_max()};
-			return {min.y, prf.y, max.y, min.x, prf.x, max.x};
-			}
+			static constraints_t ver(const core::element& element) noexcept
+				{
+				return
+					{
+					element.get_size_min().y,
+					element.get_size_prf().y,
+					element.get_size_max().y
+					};
+				}
+
+		private:
+			constraints_t(float min, float prf, float max) noexcept :
+				min{min}, prf{prf}, max{max}, 
+				max_finite{max != core::finf ? max : prf}
+				{}
 		};
 
-		std::vector<std::pair<float, float>> calc_sizes(std::pair<float, float> available, std::vector<constraints_t>& constraints) noexcept
+	
+	inline std::vector<float> calc_sizes(float available, const std::vector<constraints_t>& constraints) noexcept
+		{
+		std::vector<float> ret; ret.resize(constraints.size());
+
+		// Calc total sums and available without minimum offset
+		float mins_sum{0.f};
+		float prfs_sum{0.f};
+		float maxs_sum{0.f};
+		float maxs_max_finite{0.f};
+		float maxs_finite_sum{0.f};
+		float maxs_infinite_count{0};
+
+		for (auto& constraint : constraints)
 			{
-			std::vector<std::pair<float, float>> results; results.resize(constraints.size());
+			mins_sum += constraint.min;
+			prfs_sum += constraint.prf;
 
-			// Remove the minimums from available space
-			// Update max and desired removing their minimum offset
-			for (auto& constraint : constraints)
-				{
-				constraint.max_a -= constraint.min_a;
-				constraint.prf_a -= constraint.min_a;
-				}
+			maxs_sum += constraint.max;
+			maxs_finite_sum += constraint.max_finite;
+			maxs_max_finite = std::max(constraint.max_finite, maxs_max_finite);
 
-			// Calc total sums and available without minimum offset
-			float mins_sum{0};
-			float maxs_sum{0};
-			float prfs_sum{0};
+			if (constraint.max == core::finf) { maxs_infinite_count++; }
+			}
 
-			for (auto& constraint : constraints)
-				{
-				//Get rid of infinities (proportions don't like 'em :) )
-				if (constraint.max_a == core::finf)
-					{
-					constraint.max_a = available.first;
-					constraint.prf_a = std::min(constraint.prf_a, constraint.max_a);
-					}
-				mins_sum += constraint.min_a;
-				maxs_sum += constraint.max_a;
-				prfs_sum += constraint.prf_a;
-				}
+		float maxs_finite_sum_plus_infinites_as_max{maxs_finite_sum + (maxs_max_finite * maxs_infinite_count)};
 
-			available.first -= mins_sum;
-			available.first = std::min(available.first, maxs_sum);
-
-			//Setup base results
-			float still_available{available.first - prfs_sum};
+		if (available < mins_sum) 
+			{
+			std::cout << "ERR!\n";
+			return ret;
+			} //TODO error case
+		
+		auto loop{[&constraints, &ret, &available](float bound_lower, float bound_upper, auto getter_lower, auto getter_upper)
+			{
+			float available_range{available - bound_lower};
+			float range_sum{bound_upper - bound_lower};
 
 			for (auto index : utils::indices(constraints))
 				{
 				const auto& constraint{constraints[index]};
-				auto& result{results[index]};
-				result.first = constraints[index].min_a + constraints[index].prf_a;
-				result.second = std::min(available.second, constraint.max_b);
+				float range{getter_upper(constraint) - getter_lower(constraint)};
+
+				float proportion{range / range_sum};
+
+				ret[index] = getter_lower(constraint) + (available_range * proportion);
 				}
+			}};
 
-			//Let ze magic happen
-			if (still_available == 0) [[unlikely]] {}
-			else if (still_available > 0) // more space is available than required to all elements to reach their preferred
-				{
-				// |                 v    | 'v': available delimiter
-				// |[****P**][*P********] | '[': min, 'p': preferred, ']' max
-				// |[****P***][*P***]     | if we distribute the delta equally amongst all items, we may go past maximums
-				// |[****P*.][*P****.]    | '.': is a fraciton of a unit.
-
-				float delta_sum{maxs_sum - prfs_sum};
-				for (auto index : utils::indices(constraints))
-					{
-					const auto& constraint{constraints[index]};
-					auto& result{results[index]};
-
-					float delta{constraint.max_a - constraint.prf_a};
-					float proportion{delta / delta_sum};
-					float out{proportion * still_available};
-
-					result.first += out;
-					}
-				}
-			else if (still_available < 0) // no enough space is available for all elements to reach their preferred
-				{
-				float delta_sum{prfs_sum};
-
-				for (auto index : utils::indices(constraints))
-					{
-					const auto& constraint{constraints[index]};
-					auto& result{results[index]};
-
-					float delta{constraint.prf_a};
-					float proportion{delta / delta_sum};
-					float out{proportion * still_available};
-
-					result.first += out;
-					}
-				}
-
-			return results;
+		if (available < prfs_sum)
+			{
+			loop(mins_sum, prfs_sum, [](const auto& c) { return c.min; }, [](const auto& c) { return c.prf; });
 			}
+		else if (available == prfs_sum)
+			{
+			for (auto index : utils::indices(constraints)) { ret[index] = constraints[index].prf; }
+			}
+		else if(available < maxs_finite_sum)
+			{
+			loop(prfs_sum, maxs_finite_sum, [](const auto& c) { return c.prf; }, [](const auto& c) { return c.max_finite; });
+			}
+		else
+			{
+			float available_range{available - maxs_finite_sum};
+			float add_to_each_infinite{available_range / maxs_infinite_count};
+
+			for (auto index : utils::indices(constraints))
+				{
+				const auto& constraint{constraints[index]};
+				ret[index] = constraint.max_finite + ((constraint.max != core::finf) ? 0 : add_to_each_infinite);
+				}
+			}
+		return ret;
+
+
+		float ranges_sum{maxs_sum - mins_sum};
+		float to_fill{std::min(available, maxs_sum)};
+		float left_for_infinites{available - to_fill};
+		float add_to_each_infinite{left_for_infinites / maxs_infinite_count};
+
+		for (auto index : utils::indices(constraints))
+			{
+			const auto& constraint{constraints[index]};
+			float my_max{constraint.max != core::finf ? constraint.max : constraint.prf};
+			float range{my_max - constraint.min};
+
+			float proportion{range / ranges_sum};
+
+			ret[index] = constraint.min + (to_fill * proportion);
+			if (constraint.max == core::finf)
+				{
+				ret[index] += add_to_each_infinite;
+				}
+			}
+
+		return ret;
+		}
 	}

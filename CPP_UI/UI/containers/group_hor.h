@@ -44,19 +44,17 @@ namespace UI::inner::containers
 
 		virtual void on_resize() final override
 			{
-			std::vector<constraints_t> constraints; constraints.reserve(elements.size());
-			for (const auto& element_ptr : elements)
-				{
-				const auto& element{*element_ptr};
-				constraints.emplace_back(constraints_t::hor(element));
-				}
-			auto sizes{calc_sizes({rect.width(), rect.height()}, constraints)};
+			std::vector<details::constraints_t> constraints; constraints.reserve(elements.size());
+			for (const auto& element_ptr : elements) { constraints.emplace_back(details::constraints_t::hor(*element_ptr)); }
+
+			auto sizes{calc_sizes(rect.width(), constraints)};
 
 			for (size_t i : utils::indices(elements))
 				{
 				auto& element{*elements[i]};
 				const auto& size{sizes[i]};
-				element.resize({size.first, size.second});
+				
+				element.resize({size, std::min<float>(element.get_size_max().y, rect.height())});
 				}
 			}
 		virtual void on_reposition() noexcept
@@ -69,12 +67,12 @@ namespace UI::inner::containers
 				switch (alignment)
 					{
 					case core::align_ver::top:    y = 0; break;
-					case core::align_ver::middle: y = (rect.h() / 2.f) - (element.rect.h() / 2.f); break;
-					case core::align_ver::bottom: y =  rect.h()        -  element.rect.h();        break;
+					case core::align_ver::middle: y = (rect.h() / 2.f) - (element.get_rect().h() / 2.f); break;
+					case core::align_ver::bottom: y =  rect.h()        -  element.get_rect().h();        break;
 					}
 
 				element.reposition({rect.x() + x, rect.y() + y});
-				x += element_ptr->rect.width();
+				x += element_ptr->get_rect().width();
 				}
 			};
 		};
