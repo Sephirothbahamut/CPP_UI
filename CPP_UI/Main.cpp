@@ -239,6 +239,7 @@ std::vector<RAWINPUTDEVICELIST> GetRawInputDevices()
 			}
 		devices.resize(deviceCount);
 		}
+	return devices;
 	}
 
 int main()
@@ -388,7 +389,7 @@ int main()
 					{
 					context->SetTransform(D2D1::IdentityMatrix());
 					context->Clear(D2D1_COLOR_F{0.f, 0.f, 0.f, 0.f});
-		
+			
 					for (const auto& draw_operation : draw_operations)
 						{
 						draw_operation(context);
@@ -397,12 +398,6 @@ int main()
 				},
 			utils::MS::window::input::mouse::create_info{}
 			};
-
-		auto& default_mouse{window.get_module_ptr<utils::MS::window::input::mouse>()->default_mouse};
-
-		UI::manager ui_manager{ui_initializer, sample_ui(window, style, L"Donald Fauntleroy Duck"), default_mouse};
-
-		auto& window_ui{window.emplace_module_from_create_info(UI::window::create_info{.manager_ptr{&ui_manager}})};
 
 		// Background grid
 		draw_operations.emplace([&window](const utils::MS::graphics::d2d::device_context& context)
@@ -434,23 +429,26 @@ int main()
 				}
 			});
 
+
 		//Setup UI
 
+		auto& default_mouse{window.get_module_ptr<utils::MS::window::input::mouse>()->default_mouse};
+		
+		UI::manager ui_manager{ui_initializer, sample_ui(window, style, L"Donald Fauntleroy Duck"), default_mouse};
+		
+		auto& window_ui{window.emplace_module_from_create_info(UI::window::create_info{.manager_ptr{&ui_manager}})};
+		
 		draw_operations.emplace([&ui_manager](const utils::MS::graphics::d2d::device_context& context)
 			{
 			ui_manager.debug_draw(context);
 			ui_manager.draw(context);
 			});
 
-		//return window;
-
 		window.show();
 		while (window.is_open())
 			{
 			window.wait_event();
 			}
-
-		return window;
 		}};
 
 	std::vector<std::jthread> threads;
@@ -458,13 +456,7 @@ int main()
 		{
 		try
 			{
-			auto window{spawn_window()};
-
-			window.show();
-			while (window.is_open())
-				{
-				window.wait_event();
-				}
+			spawn_window();
 			}
 		catch (const std::exception& e) { std::cout << e.what() << std::endl; }
 		});
@@ -472,13 +464,7 @@ int main()
 		{
 		try
 			{
-			auto window{spawn_window()};
-
-			window.show();
-			while (window.is_open())
-				{
-				window.wait_event();
-				}
+			spawn_window();
 			}
 		catch (const std::exception& e) { std::cout << e.what() << std::endl; }
 		});

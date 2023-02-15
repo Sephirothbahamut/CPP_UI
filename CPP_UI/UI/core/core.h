@@ -12,6 +12,8 @@ namespace UI::inner::core
 	class element
 		{
 		public:
+			virtual ~element() {}
+
 			const utils::math::geometry::aabb& get_rect() const noexcept { return rect; }
 
 			void debug_draw_rect(const utils::MS::graphics::d2d::device_context& context, const utils::MS::graphics::d2d::solid_brush& bg, const utils::MS::graphics::d2d::solid_brush& br) const noexcept

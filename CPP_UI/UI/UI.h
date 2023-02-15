@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utils/compilation/warnings.h>
+
 #include "generation.h"
 #include "containers.h"
 #include "wrappers.h"
@@ -7,6 +9,7 @@
 #include "drawables.h"
 #include "manager.h"
 #include "window.h"
+
 
 namespace UI
 	{

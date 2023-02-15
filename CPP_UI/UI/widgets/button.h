@@ -9,6 +9,8 @@
 #include "common.h"
 #include "../containers/one_of.h"
 
+utils_disable_warnings_begin
+utils_disable_warning_msvc(4250)
 namespace UI::inner::widgets
 	{
 	class button : public core::widget, public containers::one_of
@@ -74,3 +76,4 @@ namespace UI::inner::widgets
 				}
 		};
 	}
+utils_disable_warnings_end
