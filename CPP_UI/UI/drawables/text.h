@@ -12,13 +12,13 @@ namespace UI::inner::drawables
 	struct text : shape
 		{
 		public:
-			text(utils::MS::graphics::dw::factory dw_factory, utils::MS::graphics::dw::text_format format, utils::MS::graphics::d2d::solid_brush brush, const std::wstring& string) :
+			text(utils::MS::graphics::dw::factory dw_factory, utils::MS::graphics::dw::text_format format, utils::MS::graphics::d2d::brush brush, const std::wstring& string) :
 				brush{brush},
 				layout{dw_factory, string, format, {}}
 				{
 				}
 
-			utils::MS::graphics::d2d::solid_brush brush;
+			utils::MS::graphics::d2d::brush brush;
 
 			virtual void draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
 				{

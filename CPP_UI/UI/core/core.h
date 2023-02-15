@@ -12,7 +12,7 @@ namespace UI::inner::core
 	class element
 		{
 		public:
-			utils::math::geometry::aabb rect;
+			const utils::math::geometry::aabb& get_rect() const noexcept { return rect; }
 
 			void debug_draw_rect(const utils::MS::graphics::d2d::device_context& context, const utils::MS::graphics::d2d::solid_brush& bg, const utils::MS::graphics::d2d::solid_brush& br) const noexcept
 				{
@@ -27,8 +27,7 @@ namespace UI::inner::core
 				{
 				debug_draw_rect(context, brushes.elem_bg, brushes.elem_br);
 				}
-
-			virtual drawables_obs get_drawables() const noexcept { return {}; };
+			virtual void draw(const utils::MS::graphics::d2d::device_context& context) const noexcept {}
 
 			virtual widget_obs    get_mouseover(vec2f position) noexcept { return nullptr; }
 
@@ -74,27 +73,23 @@ namespace UI::inner::core
 			inline constexpr operator bool() const noexcept { return true; }
 
 		protected:
-			virtual vec2f _get_size_min() const noexcept { return {0.f, 0.f}; }
-			virtual vec2f _get_size_max() const noexcept { return {999.f, 999.f}; }
+			utils::math::geometry::aabb rect;
+
+			virtual vec2f _get_size_min() const noexcept { return {0.f , 0.f }; }
+			virtual vec2f _get_size_max() const noexcept { return {finf, finf}; }
 			virtual vec2f _get_size_prf() const noexcept
 				{
 				vec2f min{get_size_min()};
 				vec2f max{get_size_max()};
 				return
 					{
-					max.x == finf ? std::max(/**/128.f, min.x) : min.x + ((max.x - min.x) / 2.f),
-					max.y == finf ? std::max(/***/64.f, min.y) : min.y + ((max.y - min.y) / 2.f)
+					max.x == finf ? std::max(128.f, min.x) : min.x + ((max.x - min.x) / 2.f),
+					max.y == finf ? std::max( 64.f, min.y) : min.y + ((max.y - min.y) / 2.f)
 					};
 				}
 
 			virtual void on_resize    () {}
 			virtual void on_reposition() {}
-		};
-	class drawable : public virtual element
-		{
-		public:
-			virtual void draw(const utils::MS::graphics::d2d::device_context& context) const noexcept {};
-			virtual drawables_obs get_drawables() const noexcept final override { return {this}; }
 		};
 
 	class owner : public virtual element
@@ -111,8 +106,11 @@ namespace UI::inner::core
 				debug_draw_rect(context, brushes.wrap_bg, brushes.wrap_br);
 				if (element) { element->debug_draw(context, brushes); }
 				}
+			virtual void draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
+				{
+				if (element) { element->draw(context); }
+				}
 
-			virtual drawables_obs get_drawables() const noexcept override { if (element) { return element->get_drawables(); } else { return {}; } }
 			virtual widget_obs get_mouseover(vec2f position) noexcept override
 				{
 				if (element) { return element->get_mouseover(position); }
@@ -140,30 +138,24 @@ namespace UI::inner::core
 			virtual void debug_draw(const utils::MS::graphics::d2d::device_context& context, const debug_brushes& brushes) const noexcept override
 				{
 				debug_draw_rect(context, brushes.cont_bg, brushes.cont_br);
-				for (const auto& element_ptr : elements)
+				for (const auto& element : elements)
 					{
-					element_ptr->debug_draw(context, brushes);
+					element->debug_draw(context, brushes);
+					}
+				}
+			virtual void draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
+				{
+				for (const auto& element : elements)
+					{
+					element->draw(context);
 					}
 				}
 
-			virtual drawables_obs get_drawables() const noexcept override
-				{
-				drawables_obs ret;
-				for (const auto& element_ptr : elements)
-					{
-					const auto& element = *element_ptr;
-					drawables_obs tmp = element.get_drawables();
-					ret.insert(ret.end(), tmp.begin(), tmp.end());
-					}
-				return ret;
-				}
 			virtual widget_obs get_mouseover(vec2f position) noexcept override
 				{
-				for (auto& element_ptr : std::views::reverse(elements))
+				for (auto& element : elements)
 					{
-					auto& element = *element_ptr;
-					widget_obs tmp = element.get_mouseover(position);
-					if (tmp) { return tmp; }
+					if (widget_obs ret{element->get_mouseover(position)}) { return ret; }
 					}
 				return nullptr;
 				}
@@ -196,38 +188,11 @@ namespace UI::inner::core
 				return rect.contains(position) ? this : nullptr;
 				}
 
-			virtual void on_focus_gain () {}
-			virtual void on_focus_lose () {}
-			virtual void on_mouse_enter() {}
-			virtual void on_mouse_leave() {}
-			virtual void on_mouse_button(const utils::input::mouse::button_id& id, const bool& state) {}
-
-		protected:
+			virtual bool on_focus_gain () { return false; }
+			virtual bool on_focus_lose () { return false; }
+			virtual bool on_mouse_enter() { return false; }
+			virtual bool on_mouse_leave() { return false; }
+			virtual bool on_mouse_button(const utils::input::mouse::button_id& id, const bool& state) { return false; }
 		};
 
-	class widget_wrapper : public widget, public wrapper
-		{
-		public:
-			virtual void debug_draw(const utils::MS::graphics::d2d::device_context& context, const debug_brushes& brushes) const noexcept final override
-				{
-				widget::debug_draw(context, brushes);
-				}
-
-			virtual widget_obs get_mouseover(vec2f position) noexcept override
-				{
-				auto this_mouseover{widget::get_mouseover(position)};
-				if (this_mouseover) { return this_mouseover; }
-				return wrapper::get_mouseover(position);
-				}
-
-			virtual drawables_obs get_drawables() const noexcept final override
-				{
-				drawables_obs ret{widget ::get_drawables()};
-				drawables_obs tmp{wrapper::get_drawables()};
-				ret.insert(ret.end(), tmp.begin(), tmp.end());
-				return ret; 
-				}
-
-		protected:
-		};
 	}

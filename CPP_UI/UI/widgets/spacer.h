@@ -4,7 +4,7 @@
 
 namespace UI::inner::widgets
 	{
-	struct spacer : core::widget
+	struct spacer : core::element
 		{
 		virtual void debug_draw(const utils::MS::graphics::d2d::device_context& context, const core::debug_brushes& brushes) const noexcept override
 			{

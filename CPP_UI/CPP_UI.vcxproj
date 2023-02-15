@@ -148,7 +148,8 @@
     <ClInclude Include="UI\containers.h" />
     <ClInclude Include="UI\containers\common.h" />
     <ClInclude Include="UI\containers\group_hor.h" />
-    <ClInclude Include="UI\containers\stack.h" />
+    <ClInclude Include="UI\containers\one_of.h" />
+    <ClInclude Include="UI\containers\overlay.h" />
     <ClInclude Include="UI\containers\group_ver.h" />
     <ClInclude Include="UI\core\base_types.h" />
     <ClInclude Include="UI\core\core.h" />

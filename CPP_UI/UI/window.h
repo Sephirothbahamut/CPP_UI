@@ -18,9 +18,10 @@ namespace UI::inner
 				};
 
 			window(utils::MS::window::base& base, const create_info& create_info = {}) :
-				module{base}, 
-				ui_manager_ptr{create_info.manager_ptr}
-				{}
+				module{base}
+				{
+				set_ui_manager_ptr(create_info.manager_ptr);
+				}
 
 			virtual utils::MS::window::procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
@@ -46,9 +47,15 @@ namespace UI::inner
 			const manager& get_manager() const noexcept { return *ui_manager_ptr; }
 			      manager& get_manager()       noexcept { return *ui_manager_ptr; }
 
-			utils::observer_ptr<manager> ui_manager_ptr{nullptr};
+			void set_ui_manager_ptr(utils::observer_ptr<manager> manager_ptr) noexcept
+				{
+				ui_manager_ptr = manager_ptr;
+				ui_manager_ptr->window_ptr = &get_base();
+				}
 
 		private:
+			utils::observer_ptr<manager> ui_manager_ptr{nullptr};
+
 			void getminmaxinfo(LPARAM lparam)
 				{
 				auto decorations_size{get_base().window_rect.size() - get_base().client_rect.size()};

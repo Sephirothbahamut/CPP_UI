@@ -19,7 +19,8 @@ namespace UI
 		{
 		using group_hor = inner::containers::group_hor;
 		using group_ver = inner::containers::group_ver;
-		using stack = inner::containers::stack;
+		using overlay   = inner::containers::overlay  ;
+		using one_of    = inner::containers::one_of   ;
 		}
 	namespace wrappers
 		{
@@ -27,14 +28,16 @@ namespace UI
 		}
 	namespace widgets 
 		{
-		using spacer      = inner::widgets::spacer;
-		using dummy       = inner::widgets::dummy;
-		using button      = inner::widgets::button;
+		using spacer      = inner::widgets::spacer     ;
+		using dummy       = inner::widgets::dummy      ;
+		using button      = inner::widgets::button     ;
 		using window_drag = inner::widgets::window_drag;
 		}
 	namespace drawables
 		{
-		using text = inner::drawables::text;
+		using draw_shape_data = inner::drawables::draw_shape_data;
+		using text            = inner::drawables::text           ;
+		using rect            = inner::drawables::rect           ;
 		}
 	namespace generation
 		{

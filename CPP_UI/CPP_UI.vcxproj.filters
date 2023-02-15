@@ -68,7 +68,7 @@
     <ClInclude Include="UI\containers\group_hor.h">
       <Filter>Header Files\UI\containers</Filter>
     </ClInclude>
-    <ClInclude Include="UI\containers\stack.h">
+    <ClInclude Include="UI\containers\overlay.h">
       <Filter>Header Files\UI\containers</Filter>
     </ClInclude>
     <ClInclude Include="UI\containers\group_ver.h">
@@ -130,6 +130,9 @@
     </ClInclude>
     <ClInclude Include="UI\initializer.h">
       <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\containers\one_of.h">
+      <Filter>Header Files\UI\containers</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
