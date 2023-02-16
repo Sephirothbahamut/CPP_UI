@@ -168,6 +168,8 @@
     <ClInclude Include="UI\widgets\common.h" />
     <ClInclude Include="UI\widgets\dummy.h" />
     <ClInclude Include="UI\widgets\spacer.h" />
+    <ClInclude Include="UI\widgets\tabbed.h" />
+    <ClInclude Include="UI\widgets\toggle.h" />
     <ClInclude Include="UI\widgets\window_drag.h" />
     <ClInclude Include="UI\window.h" />
     <ClInclude Include="UI\wrappers.h" />

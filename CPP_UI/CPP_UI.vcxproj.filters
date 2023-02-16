@@ -134,5 +134,11 @@
     <ClInclude Include="UI\containers\one_of.h">
       <Filter>Header Files\UI\containers</Filter>
     </ClInclude>
+    <ClInclude Include="UI\widgets\toggle.h">
+      <Filter>Header Files\UI\widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\widgets\tabbed.h">
+      <Filter>Header Files\UI\widgets</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

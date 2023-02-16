@@ -13,24 +13,10 @@ utils_disable_warnings_begin
 utils_disable_warning_msvc(4250)
 namespace UI::inner::widgets
 	{
-	class button : public core::widget, protected containers::one_of
+	class button : public core::widget, public containers::one_of
 		{
 		public:
-			struct layers
-				{
-				core::element_own normal;
-				core::element_own down  ;
-				core::element_own hover ;
-				};
-			button(std::function<void()> callback, layers&& layers) : callback{callback}
-				{
-				containers::one_of::push(std::move(layers.normal));
-				containers::one_of::push(std::move(layers.down  ));
-				containers::one_of::push(std::move(layers.hover ));
-				}
-
-			using containers::one_of::align_hor;
-			using containers::one_of::align_ver;
+			button(std::function<void()> callback) : callback{callback} {}
 
 			virtual void debug_draw(const utils::MS::graphics::d2d::device_context& context, const core::debug_brushes& brushes) const noexcept override
 				{
@@ -55,17 +41,17 @@ namespace UI::inner::widgets
 			std::function<void()> callback;
 
 		private:
-			bool pressed{false};
-			bool hovered{false};
+			bool _pressed{false};
+			bool _hovered{false};
 
 			void on_mouse_button_inner(const utils::input::mouse::button_id& id, const bool& state)
 				{
 				if (id == utils::input::mouse::button_id::left)
 					{
-					if (hovered)
+					if (_hovered)
 						{
 						if (state) { set_pressed(true); return; }
-						else if (pressed) { callback(); }
+						else if (_pressed) { callback(); }
 						}
 					}
 				set_pressed(false);
@@ -73,20 +59,20 @@ namespace UI::inner::widgets
 
 			void set_pressed(bool state) noexcept
 				{
-				pressed = state;
+				_pressed = state;
 				update_index();
 				}
 			void set_hovered(bool state) noexcept
 				{
-				hovered = state;
+				_hovered = state;
 				update_index();
 				}
 
 			void update_index() noexcept
 				{
-				     if (pressed && elements[1]) { current_index = 1; }
-				else if (hovered && elements[2]) { current_index = 2; }
-				else if (           elements[0]) { current_index = 0; }
+				     if (_pressed) { if(elements.size()    ) { current_index = elements.size() - 1; } }
+				else if (_hovered) { if(elements.size() > 1) { current_index = elements.size() - 2; } }
+				else { current_index = 0; }
 				}
 		};
 	}

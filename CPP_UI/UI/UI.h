@@ -34,6 +34,7 @@ namespace UI
 		using spacer      = inner::widgets::spacer     ;
 		using dummy       = inner::widgets::dummy      ;
 		using button      = inner::widgets::button     ;
+		using toggle      = inner::widgets::toggle     ;
 		using window_drag = inner::widgets::window_drag;
 		}
 	namespace drawables

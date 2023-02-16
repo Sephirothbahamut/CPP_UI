@@ -45,7 +45,17 @@ std::unique_ptr<UI::widgets::button> make_button(const style& style, const std::
 		return root;
 		}};
 
-	auto root{std::make_unique<UI::widgets::button>(callback)};
+	auto root{std::make_unique<UI::widgets::button>
+		(
+		callback,
+		UI::widgets::button::layers
+			{
+			.normal{make_layer(style.button.normal)},
+			.down  {make_layer(style.button.hover )},
+			.hover {make_layer(style.button.down  )}
+			}
+		)};
+
 	root->align_hor = UI::core::align_hor::center;
 	root->align_ver = UI::core::align_ver::middle;
 	root->sizes.min_x = 128.f;
@@ -55,9 +65,48 @@ std::unique_ptr<UI::widgets::button> make_button(const style& style, const std::
 	root->sizes.max_x = 256.f;
 	root->sizes.max_y =  32.f;
 
-	root->push(make_layer(style.button.normal));
-	root->push(make_layer(style.button.hover ));
-	root->push(make_layer(style.button.down  ));
+	return root;
+	}
+std::unique_ptr<UI::widgets::toggle> make_toggle(const style& style, std::function<void(bool)> callback)
+	{
+	auto make_layer{[&](const UI::drawables::draw_shape_data& draw_shape_data, const std::wstring& text)
+		{
+		auto root{std::make_unique<UI::containers::overlay>()};
+		root->align_hor = UI::core::align_hor::center;
+		root->align_ver = UI::core::align_ver::middle;
+
+		//if (auto & padding{root->emplace<UI::wrappers::padding>(utils::math::rect<float>{8.f, 8.f, 8.f, 8.f})})
+		//	{
+		//	if (auto & rect{padding.emplace<UI::drawables::rect>()})
+		//		{
+		//		rect.draw_shape_data = draw_shape_data;
+		//		}
+		//	}
+		root->emplace<UI::drawables::text>(style.dw_factory, style.button.text.format, style.button.text.brush, text);
+		return root;
+		}};
+
+	auto root{std::make_unique<UI::widgets::toggle>
+		(
+		callback,
+		UI::widgets::toggle::layers
+			{
+			.normal_false{make_layer(style.button.normal, L"☐")},
+			.normal_true {make_layer(style.button.normal, L"☑")},
+			.down_false  {make_layer(style.button.down  , L"☐")},
+			.down_true   {make_layer(style.button.down  , L"☒")},
+			.hover_false {make_layer(style.button.hover , L"☐")},
+			.hover_true  {make_layer(style.button.hover , L"☑")}
+			}
+		)};
+	root->align_hor = UI::core::align_hor::center;
+	root->align_ver = UI::core::align_ver::middle;
+	root->sizes.min_x = 24.f;
+	root->sizes.min_y = 24.f;
+	root->sizes.prf_x = 24.f;
+	root->sizes.prf_y = 24.f;
+	root->sizes.max_x = 24.f;
+	root->sizes.max_y = 24.f;
 
 	return root;
 	}
@@ -213,6 +262,9 @@ UI::core::element_own sample_ui(utils::MS::window::base& window, const style& st
 		body.push(make_button(style, L"Hello world!", []() {std::cout << "Hello world!" << std::endl; }));
 		body.push(make_button(style, L"Hello cats! ", []() {std::cout << "Hello cats! " << std::endl; }));
 		body.push(make_button(style, L"Hello dogs! ", []() {std::cout << "Hello dogs! " << std::endl; }));
+		body.push(make_toggle(style, [](bool v) {std::cout << (v ? "Hello" : "Goodbye") << std::endl; }));
+		body.push(make_toggle(style, [](bool v) {std::cout << (v ? "Hello" : "Goodbye") << std::endl; }));
+		body.push(make_toggle(style, [](bool v) {std::cout << (v ? "Hello" : "Goodbye") << std::endl; }));
 		}
 
 	root->emplace<UI::widgets::spacer>();

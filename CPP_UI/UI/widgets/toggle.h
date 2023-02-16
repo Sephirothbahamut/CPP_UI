@@ -13,20 +13,26 @@ utils_disable_warnings_begin
 utils_disable_warning_msvc(4250)
 namespace UI::inner::widgets
 	{
-	class button : public core::widget, protected containers::one_of
+	class toggle : public core::widget, protected containers::one_of
 		{
 		public:
 			struct layers
 				{
-				core::element_own normal;
-				core::element_own down  ;
-				core::element_own hover ;
+				core::element_own normal_false;
+				core::element_own normal_true ;
+				core::element_own down_false  ;
+				core::element_own down_true   ;
+				core::element_own hover_false ;
+				core::element_own hover_true  ;
 				};
-			button(std::function<void()> callback, layers&& layers) : callback{callback}
+			toggle(std::function<void(bool)> callback, layers&& layers) : callback{callback} 
 				{
-				containers::one_of::push(std::move(layers.normal));
-				containers::one_of::push(std::move(layers.down  ));
-				containers::one_of::push(std::move(layers.hover ));
+				containers::one_of::push(std::move(layers.normal_false));
+				containers::one_of::push(std::move(layers.normal_true ));
+				containers::one_of::push(std::move(layers.down_false  ));
+				containers::one_of::push(std::move(layers.down_true   ));
+				containers::one_of::push(std::move(layers.hover_false ));
+				containers::one_of::push(std::move(layers.hover_true  ));
 				}
 
 			using containers::one_of::align_hor;
@@ -52,11 +58,18 @@ namespace UI::inner::widgets
 				return true;
 				}
 
-			std::function<void()> callback;
+			std::function<void(bool)> callback;
+
+			void toggle_state() { set_state(!get_state()); }
+			void set_state(bool new_state) { _state = new_state; callback(_state); }
+			bool get_state() const { return _state; }
+
+			__declspec(property(get = get_state, put = set_state)) bool state;
 
 		private:
 			bool pressed{false};
 			bool hovered{false};
+			bool _state  {false};
 
 			void on_mouse_button_inner(const utils::input::mouse::button_id& id, const bool& state)
 				{
@@ -65,7 +78,7 @@ namespace UI::inner::widgets
 					if (hovered)
 						{
 						if (state) { set_pressed(true); return; }
-						else if (pressed) { callback(); }
+						else if (pressed) { toggle_state(); }
 						}
 					}
 				set_pressed(false);
@@ -84,9 +97,12 @@ namespace UI::inner::widgets
 
 			void update_index() noexcept
 				{
-				     if (pressed && elements[1]) { current_index = 1; }
-				else if (hovered && elements[2]) { current_index = 2; }
-				else if (           elements[0]) { current_index = 0; }
+				     if (pressed && !_state && elements[2]) { current_index = 2; }
+				else if (pressed &&  _state && elements[3]) { current_index = 3; }
+				else if (hovered && !_state && elements[4]) { current_index = 4; }
+				else if (hovered &&  _state && elements[5]) { current_index = 5; }
+				else if (           !_state && elements[0]) { current_index = 0; }
+				else if (            _state && elements[1]) { current_index = 1; }
 				}
 		};
 	}
