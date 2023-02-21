@@ -96,11 +96,13 @@ namespace UI::inner::core
 		};
 
 	template <typename VIEW_T>
-		requires(std::same_as<core::element_ref, decltype(*(VIEW_T{}.begin()))>)
+		//requires(std::same_as<core::element_ref, decltype(*(VIEW_T{}.begin()))>)
 	class container_obs : public element
 		{
 		public:
 			using view_t = VIEW_T;
+			container_obs(view_t view) : elements_view{view} {}
+
 			view_t elements_view;
 			
 			virtual void debug_draw(const utils::MS::graphics::d2d::device_context& context, const debug_brushes& brushes) const noexcept override
@@ -108,14 +110,14 @@ namespace UI::inner::core
 				debug_draw_rect(context, brushes.cont_bg, brushes.cont_br);
 				for (const auto& element : elements_view)
 					{
-					element->debug_draw(context, brushes);
+					element.debug_draw(context, brushes);
 					}
 				}
 			virtual void draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
 				{
 				for (const auto& element : elements_view)
 					{
-					element->draw(context);
+					element.draw(context);
 					}
 				}
 
@@ -123,7 +125,7 @@ namespace UI::inner::core
 				{
 				for (auto& element : elements_view)
 					{
-					if (widget_obs ret{element->get_mouseover(position)}) { return ret; }
+					if (widget_obs ret{element.get_mouseover(position)}) { return ret; }
 					}
 				return nullptr;
 				}
@@ -139,8 +141,12 @@ namespace UI::inner::core
 			public:
 				static constexpr size_t slots_count{SLOTS_COUNT};
 		
-			public:
+			protected:
+				static constexpr bool is_vector{slots_count == 0};
+				static constexpr bool is_single{slots_count == 1};
+				static constexpr bool is_array {slots_count >= 1};
 
+			public:
 				using elements_t = std::conditional_t
 						<
 						is_vector,
@@ -150,13 +156,9 @@ namespace UI::inner::core
 				elements_t elements;
 
 			protected:
-				static constexpr bool is_vector{is_owning && slots_count == 0};
-				static constexpr bool is_single{is_owning && slots_count == 1};
-				static constexpr bool is_array {is_owning && slots_count >= 1};
-
-				core::element_ref extract_element(core::element_own& element_ptr) { return *element_ptr; }
+				static core::element_ref extract_element(core::element_own& element_ptr) noexcept { return *element_ptr; }
 				auto make_extract_view() { return elements | std::views::transform(&extract_element); }
-				using extract_view_t = decltype(make_extract_view());
+				using extract_view_t = decltype(elements | std::views::transform(&extract_element));
 			};
 		}
 
@@ -169,15 +171,15 @@ namespace UI::inner::core
 			using container_own_t::is_vector;
 			using container_own_t::is_single;
 			using container_own_t::is_array ;
+			using container_own_t::elements ;
 
 		public:
 			container_own() : container_obs_t{container_own_t::make_extract_view()}
 				{}
 
-			void update_view() noexcept
-				{
-				container_obs_t::elements_view = container_own_t::make_extract_view();
-				}
+			using container_obs_t::elements_view;
+
+			void update_view() noexcept { container_obs_t::elements_view = container_own_t::make_extract_view(); }
 		
 			template <typename T, typename ...Args>
 			T& emplace(Args&&... args) noexcept

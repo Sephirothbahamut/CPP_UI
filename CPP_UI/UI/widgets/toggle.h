@@ -13,7 +13,7 @@ utils_disable_warnings_begin
 utils_disable_warning_msvc(4250)
 namespace UI::inner::widgets
 	{
-	class toggle : public core::container_widget<containers::one_of<6>>
+	class toggle : public core::container_widget<containers::one_of<core::container_own<6>>>
 		{
 		public:
 			struct layers
@@ -27,12 +27,12 @@ namespace UI::inner::widgets
 				};
 			toggle(std::function<void(bool)> callback, layers&& layers) : callback{callback} 
 				{
-				containers::one_of<6>::set(0, std::move(layers.normal_false));
-				containers::one_of<6>::set(1, std::move(layers.normal_true ));
-				containers::one_of<6>::set(2, std::move(layers.down_false  ));
-				containers::one_of<6>::set(3, std::move(layers.down_true   ));
-				containers::one_of<6>::set(4, std::move(layers.hover_false ));
-				containers::one_of<6>::set(5, std::move(layers.hover_true  ));
+				containers::one_of<core::container_own<6>>::set(0, std::move(layers.normal_false));
+				containers::one_of<core::container_own<6>>::set(1, std::move(layers.normal_true ));
+				containers::one_of<core::container_own<6>>::set(2, std::move(layers.down_false  ));
+				containers::one_of<core::container_own<6>>::set(3, std::move(layers.down_true   ));
+				containers::one_of<core::container_own<6>>::set(4, std::move(layers.hover_false ));
+				containers::one_of<core::container_own<6>>::set(5, std::move(layers.hover_true  ));
 				}
 
 			virtual bool on_focus_lose () override { set_pressed(false); return true; }

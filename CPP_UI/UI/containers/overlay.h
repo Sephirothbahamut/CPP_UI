@@ -6,21 +6,17 @@
 
 namespace UI::inner::containers
 	{
-	template <size_t slots_count = 0, typename view_t = void>
-	struct overlay : public core::container<slots_count, view_t>
+	template <core::concepts::container container_t = core::container_own<0>>
+	struct overlay : public container_t
 		{
-		using core::container<slots_count, view_t>::elements;
-		using core::container<slots_count, view_t>::rect;
-		using core::container<slots_count, view_t>::container;
-
 		core::align_hor align_hor{core::align_hor::left};
 		core::align_ver align_ver{core::align_ver::top };
 
 		virtual core::widget_obs get_mouseover(core::vec2f position) noexcept
 			{
-			for (auto& element_ptr : std::ranges::reverse_view{elements})
+			for (auto& element : std::ranges::reverse_view{container_t::elements_view})
 				{
-				if (auto ret{element_ptr->get_mouseover(position)}) { return ret; }
+				if (auto ret{element.get_mouseover(position)}) { return ret; }
 				}
 			return nullptr;
 			}
@@ -28,9 +24,9 @@ namespace UI::inner::containers
 		virtual core::vec2f _get_size_min() const noexcept final override
 			{
 			core::vec2f ret{0, 0};
-			for (const auto& element_ptr : elements)
+			for (const auto& element : container_t::elements_view)
 				{
-				core::vec2f element_val{element_ptr->get_size_min()};
+				core::vec2f element_val{element.get_size_min()};
 				ret.x = std::max(ret.x, element_val.x);
 				ret.y = std::max(ret.y, element_val.y);
 				}
@@ -39,9 +35,9 @@ namespace UI::inner::containers
 		virtual core::vec2f _get_size_prf() const noexcept final override
 			{
 			core::vec2f ret{0, 0};
-			for (const auto& element_ptr : elements)
+			for (const auto& element : container_t::elements_view)
 				{
-				core::vec2f element_val{element_ptr->get_size_prf()};
+				core::vec2f element_val{element.get_size_prf()};
 				ret.x = std::max(ret.x, element_val.x);
 				ret.y = std::max(ret.y, element_val.y);
 				}
@@ -50,9 +46,9 @@ namespace UI::inner::containers
 		virtual core::vec2f _get_size_max() const noexcept final override
 			{
 			core::vec2f ret{0, 0};
-			for (const auto& element_ptr : elements)
+			for (const auto& element : container_t::elements_view)
 				{
-				core::vec2f element_val{element_ptr->get_size_max()};
+				core::vec2f element_val{element.get_size_max()};
 				ret.x = std::max(ret.x, element_val.x);
 				ret.y = std::max(ret.y, element_val.y);
 				}
@@ -61,33 +57,31 @@ namespace UI::inner::containers
 
 		virtual void on_resize() final override
 			{
-			for (auto& element_ptr : elements)
+			for (auto& element : container_t::elements_view)
 				{
-				element_ptr->resize(rect.size());
+				element.resize(container_t::rect.size());
 				}
 			}
 		virtual void on_reposition() noexcept override
 			{
-			for (auto& element_ptr : elements)
+			for (auto& element : container_t::elements_view)
 				{
-				auto& element{*element_ptr};
-
 				float x{0};
 				switch (align_hor)
 					{
 					case core::align_hor::left:   x = 0; break;
-					case core::align_hor::center: x = (rect.w() / 2.f) - (element.get_rect().w() / 2.f); break;
-					case core::align_hor::right:  x =  rect.w()        -  element.get_rect().w();        break;
+					case core::align_hor::center: x = (container_t::rect.w() / 2.f) - (element.get_rect().w() / 2.f); break;
+					case core::align_hor::right:  x =  container_t::rect.w()        -  element.get_rect().w();        break;
 					}
 				float y{0};
 				switch (align_ver)
 					{
 					case core::align_ver::top:    y = 0; break;
-					case core::align_ver::middle: y = (rect.h() / 2.f) - (element.get_rect().h() / 2.f); break;
-					case core::align_ver::bottom: y =  rect.h()        -  element.get_rect().h();        break;
+					case core::align_ver::middle: y = (container_t::rect.h() / 2.f) - (element.get_rect().h() / 2.f); break;
+					case core::align_ver::bottom: y =  container_t::rect.h()        -  element.get_rect().h();        break;
 					}
 
-				element.reposition({rect.x() + x, rect.y() + y});
+				element.reposition({container_t::rect.x() + x, container_t::rect.y() + y});
 				}
 			};
 		};

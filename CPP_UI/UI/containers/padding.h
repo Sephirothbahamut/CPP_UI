@@ -38,58 +38,46 @@ namespace UI::inner::containers
 
 	core::vec2f get_padding_aabb_tot(const utils::math::geometry::aabb& aabb) noexcept { return {aabb.rr + aabb.ll, aabb.up + aabb.dw}; }
 
-	template <typename view_t = void>
-	class padding : public core::wrapper<view_t>, public utils::math::geometry::aabb
+	template <core::concepts::container container_t = core::container_own<1>>
+	class padding : public container_t, public utils::math::geometry::aabb
 		{
 		public:
-			using core::wrapper<view_t>::elements;
-			using core::wrapper<view_t>::rect;
-			using core::wrapper<view_t>::wrapper;
-
 			padding(const utils::math::geometry::aabb& init) : utils::math::geometry::aabb{init} {}
 
-			virtual core::vec2f _get_size_min() const noexcept final override { return core::wrapper<view_t>::_get_size_min() + get_padding_aabb_tot(*this); }
-			virtual core::vec2f _get_size_prf() const noexcept final override { return core::wrapper<view_t>::_get_size_prf() + get_padding_aabb_tot(*this); }
-			virtual core::vec2f _get_size_max() const noexcept final override { return core::wrapper<view_t>::_get_size_max() + get_padding_aabb_tot(*this); }
+			virtual core::vec2f _get_size_min() const noexcept final override { return container_t::elements_view[0].get_size_min() + get_padding_aabb_tot(*this); }
+			virtual core::vec2f _get_size_prf() const noexcept final override { return container_t::elements_view[0].get_size_prf() + get_padding_aabb_tot(*this); }
+			virtual core::vec2f _get_size_max() const noexcept final override { return container_t::elements_view[0].get_size_max() + get_padding_aabb_tot(*this); }
 
 			virtual void on_resize()  final override
 				{
-				elements[0]->resize(core::container<1>::rect.size() - get_padding_aabb_tot(*this));
+				container_t::elements_view[0].resize(container_t::rect.size() - get_padding_aabb_tot(*this));
 				}
 			virtual void on_reposition() noexcept
 				{
-				elements[0]->reposition(core::container<1>::rect.position() + core::vec2f{left, top});
+				container_t::elements_view[0].reposition(container_t::rect.position() + core::vec2f{left, top});
 				};
-
-		private:
 		};
 
-	template <typename view_t = void>
-	class variable_padding : public core::wrapper<view_t>
+	template <core::concepts::container container_t = core::container_own<1>>
+	class variable_padding : public container_t
 		{
 		public:
-			using core::wrapper<view_t>::elements;
-			using core::wrapper<view_t>::rect;
-			using core::wrapper<view_t>::wrapper;
-
 			utils::math::geometry::aabb min;
 			utils::math::geometry::aabb prf;
 			utils::math::geometry::aabb max;
 
-			virtual core::vec2f _get_size_min() const noexcept final override { return core::wrapper<view_t>::_get_size_min() + get_padding_aabb_tot(min); }
-			virtual core::vec2f _get_size_prf() const noexcept final override { return core::wrapper<view_t>::_get_size_prf() + get_padding_aabb_tot(prf); }
-			virtual core::vec2f _get_size_max() const noexcept final override { return core::wrapper<view_t>::_get_size_max() + get_padding_aabb_tot(max); }
+			virtual core::vec2f _get_size_min() const noexcept final override { return container_t::elements_view[0].get_size_min() + get_padding_aabb_tot(min); }
+			virtual core::vec2f _get_size_prf() const noexcept final override { return container_t::elements_view[0].get_size_prf() + get_padding_aabb_tot(prf); }
+			virtual core::vec2f _get_size_max() const noexcept final override { return container_t::elements_view[0].get_size_max() + get_padding_aabb_tot(max); }
 
 			//TODO
 			virtual void on_resize()  final override
 				{
-				elements[0]->resize(rect.size() - get_padding_aabb_tot(min));
+				container_t::elements_view[0].resize(container_t::rect.size() - get_padding_aabb_tot(min));
 				}
 			virtual void on_reposition() noexcept
 				{
-				elements[0]->reposition(rect.position() + core::vec2f{min.left, min.top});
+				container_t::elements_view[0].reposition(container_t::rect.position() + core::vec2f{min.left, min.top});
 				};
-
-		private:
 		};
 	}

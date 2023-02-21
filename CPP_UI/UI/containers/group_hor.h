@@ -12,9 +12,9 @@ namespace UI::inner::containers
 		virtual core::vec2f _get_size_min() const noexcept final override
 			{
 			core::vec2f ret{0, 0};
-			for (const auto& element_ptr : elements_view)
+			for (const auto& element : container_t::elements_view)
 				{
-				core::vec2f element_val{element_ptr->get_size_min()};
+				core::vec2f element_val{element.get_size_min()};
 				ret.x += element_val.x;
 				ret.y = std::max(ret.y, element_val.y);
 				}
@@ -23,9 +23,9 @@ namespace UI::inner::containers
 		virtual core::vec2f _get_size_prf() const noexcept final override
 			{
 			core::vec2f ret{0, 0};
-			for (const auto& element_ptr : elements_view)
+			for (const auto& element : container_t::elements_view)
 				{
-				core::vec2f element_val{element_ptr->get_size_prf()};
+				core::vec2f element_val{element.get_size_prf()};
 				ret.x += element_val.x;
 				ret.y = std::max(ret.y, element_val.y);
 				}
@@ -34,9 +34,9 @@ namespace UI::inner::containers
 		virtual core::vec2f _get_size_max() const noexcept final override
 			{
 			core::vec2f ret{0, 0};
-			for (const auto& element_ptr : elements_view)
+			for (const auto& element : container_t::elements_view)
 				{
-				core::vec2f element_val{element_ptr->get_size_max()};
+				core::vec2f element_val{element.get_size_max()};
 				ret.x += element_val.x;
 				ret.y = std::max(ret.y, element_val.y);
 				}
@@ -45,35 +45,34 @@ namespace UI::inner::containers
 
 		virtual void on_resize() final override
 			{
-			std::vector<details::constraints_t> constraints; constraints.reserve(elements_view.size());
-			for (const auto& element_ptr : elements_view) { constraints.emplace_back(details::constraints_t::hor(*element_ptr)); }
+			std::vector<details::constraints_t> constraints; constraints.reserve(container_t::elements_view.size());
+			for (const auto& element : container_t::elements_view) { constraints.emplace_back(details::constraints_t::hor(element)); }
 
-			auto sizes{calc_sizes(rect.width(), constraints)};
+			auto sizes{calc_sizes(container_t::rect.width(), constraints)};
 
-			for (size_t i : utils::indices(elements_view))
+			for (size_t i : utils::indices(container_t::elements_view))
 				{
-				auto& element{*elements_view[i]};
+				auto& element{container_t::elements_view[i]};
 				const auto& size{sizes[i]};
 				
-				element.resize({size, std::min<float>(element.get_size_max().y, rect.height())});
+				element.resize({size, std::min<float>(element.get_size_max().y, container_t::rect.height())});
 				}
 			}
 		virtual void on_reposition() noexcept
 			{
 			float x{0};
-			for (auto& element_ptr : elements)
+			for (auto& element : container_t::elements_view)
 				{
-				auto& element{*element_ptr};
 				float y{0};
 				switch (alignment)
 					{
 					case core::align_ver::top:    y = 0; break;
-					case core::align_ver::middle: y = (rect.h() / 2.f) - (element.get_rect().h() / 2.f); break;
-					case core::align_ver::bottom: y =  rect.h()        -  element.get_rect().h();        break;
+					case core::align_ver::middle: y = (container_t::rect.h() / 2.f) - (element.get_rect().h() / 2.f); break;
+					case core::align_ver::bottom: y =  container_t::rect.h()        -  element.get_rect().h();        break;
 					}
 
-				element.reposition({rect.x() + x, rect.y() + y});
-				x += element_ptr->get_rect().width();
+				element.reposition({container_t::rect.x() + x, container_t::rect.y() + y});
+				x += element.get_rect().width();
 				}
 			};
 		};

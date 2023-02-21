@@ -18,11 +18,11 @@ namespace UI
 
 	namespace containers
 		{
-		template <size_t slots_count = 0, typename view_t = void> using group_hor = inner::containers::group_hor<slots_count, view_t>;
-		template <size_t slots_count = 0, typename view_t = void> using group_ver = inner::containers::group_ver<slots_count, view_t>;
-		template <size_t slots_count = 0, typename view_t = void> using overlay   = inner::containers::overlay  <slots_count, view_t>;
-		template <size_t slots_count = 0, typename view_t = void> using one_of    = inner::containers::one_of   <slots_count, view_t>;
-		template <                        typename view_t = void> using padding   = inner::containers::padding  <             view_t>;
+		template <core::concepts::container container_t = core::container_own<0>> using group_hor = inner::containers::group_hor<container_t>;
+		template <core::concepts::container container_t = core::container_own<0>> using group_ver = inner::containers::group_ver<container_t>;
+		template <core::concepts::container container_t = core::container_own<0>> using overlay   = inner::containers::overlay  <container_t>;
+		template <core::concepts::container container_t = core::container_own<0>> using one_of    = inner::containers::one_of   <container_t>;
+		template <core::concepts::container container_t = core::container_own<1>> using padding   = inner::containers::padding  <container_t>;
 		}
 	namespace widgets 
 		{
@@ -31,7 +31,7 @@ namespace UI
 		using button      = inner::widgets::button     ;
 		using toggle      = inner::widgets::toggle     ;
 		using window_drag = inner::widgets::window_drag;
-		using tabbed      = inner::widgets::tabbed     ;
+		//using tabbed      = inner::widgets::tabbed     ;
 		}
 	namespace drawables
 		{

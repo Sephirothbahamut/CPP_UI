@@ -13,7 +13,7 @@ utils_disable_warnings_begin
 
 namespace UI::inner::widgets
 	{
-	class button : public core::container_widget<containers::one_of<3>>
+	class button : public core::container_widget<containers::one_of<core::container_own<3>>>
 		{
 		public:
 			struct layers
@@ -24,9 +24,9 @@ namespace UI::inner::widgets
 				};
 			button(std::function<void()> callback, layers&& layers) : callback{callback}
 				{
-				containers::one_of<3>::set(0, std::move(layers.normal));
-				containers::one_of<3>::set(1, std::move(layers.down  ));
-				containers::one_of<3>::set(2, std::move(layers.hover ));
+				containers::one_of<core::container_own<3>>::set(0, std::move(layers.normal));
+				containers::one_of<core::container_own<3>>::set(1, std::move(layers.down  ));
+				containers::one_of<core::container_own<3>>::set(2, std::move(layers.hover ));
 				}
 
 			virtual bool on_focus_lose () override { set_pressed(false); return true; }
@@ -42,7 +42,7 @@ namespace UI::inner::widgets
 			std::function<void()> callback;
 
 		private:
-			containers::one_of<3> graphics;
+			containers::one_of<core::container_own<3>> graphics;
 
 			bool pressed{false};
 			bool hovered{false};

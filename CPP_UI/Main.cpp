@@ -34,7 +34,7 @@ std::unique_ptr<UI::widgets::button> make_button(const style& style, const std::
 	{
 	auto make_layer{[&](const UI::drawables::draw_shape_data& draw_shape_data)
 		{
-		auto root{std::make_unique<UI::containers::overlay<2>>()};
+		auto root{std::make_unique<UI::containers::overlay<UI::core::container_own<2>>>()};
 		root->align_hor = UI::core::align_hor::center;
 		root->align_ver = UI::core::align_ver::middle;
 
