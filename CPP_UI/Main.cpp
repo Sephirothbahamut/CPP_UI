@@ -1,4 +1,5 @@
 ﻿#include <thread>
+#include <memory>
 
 #include <utils/MS/window/window.h>
 #include <utils/MS/window/style.h>
@@ -33,15 +34,15 @@ std::unique_ptr<UI::widgets::button> make_button(const style& style, const std::
 	{
 	auto make_layer{[&](const UI::drawables::draw_shape_data& draw_shape_data)
 		{
-		auto root{std::make_unique<UI::containers::overlay>()};
+		auto root{std::make_unique<UI::containers::overlay<2>>()};
 		root->align_hor = UI::core::align_hor::center;
 		root->align_ver = UI::core::align_ver::middle;
 
-		if (auto & rect{root->emplace<UI::drawables::rect>()})
+		if (auto & rect{root->emplace_at<UI::drawables::rect>(0)})
 			{
 			rect.draw_shape_data = draw_shape_data;
 			}
-		root->emplace<UI::drawables::text>(style.dw_factory, style.button.text.format, style.button.text.brush, text);
+		root->emplace_at<UI::drawables::text>(1, style.dw_factory, style.button.text.format, style.button.text.brush, text);
 		return root;
 		}};
 
@@ -71,7 +72,7 @@ std::unique_ptr<UI::widgets::toggle> make_toggle(const style& style, std::functi
 	{
 	auto make_layer{[&](const UI::drawables::draw_shape_data& draw_shape_data, const std::wstring& text)
 		{
-		auto root{std::make_unique<UI::containers::overlay>()};
+		auto root{std::make_unique<UI::containers::overlay<>>()};
 		root->align_hor = UI::core::align_hor::center;
 		root->align_ver = UI::core::align_ver::middle;
 
@@ -113,7 +114,7 @@ std::unique_ptr<UI::widgets::toggle> make_toggle(const style& style, std::functi
 
 UI::core::element_own title_bar(utils::MS::window::base& window, const style& style, const std::wstring& string)
 	{
-	auto root{std::make_unique<UI::containers::overlay>()};
+	auto root{std::make_unique<UI::containers::overlay<>>()};
 	root->sizes.max_y = 24;
 	root->sizes.min_y = 24;
 
@@ -123,7 +124,7 @@ UI::core::element_own title_bar(utils::MS::window::base& window, const style& st
 		drag_layer.sizes.max_y = std::numeric_limits<float>::infinity();
 		}
 
-	if (auto& buttons_bar{root->emplace<UI::containers::group_hor>()})
+	if (auto& buttons_bar{root->emplace<UI::containers::group_hor<>>()})
 		{
 		buttons_bar.alignment = UI::core::align_ver::middle;
 		if (auto& text{buttons_bar.emplace<UI::drawables::text>(style.dw_factory, style.text.format, style.text.brush, string)})
@@ -162,17 +163,17 @@ UI::core::element_own title_bar(utils::MS::window::base& window, const style& st
 
 UI::core::element_own sample_ui(utils::MS::window::base& window, const style& style, const std::wstring& string)
 	{
-	auto root{std::make_unique<UI::containers::group_ver>()};
+	auto root{std::make_unique<UI::containers::group_ver<>>()};
 	root->alignment = UI::align_hor::left;
 
 	root->push(title_bar(window, style, string));
 
-	if (auto & top{root->emplace<UI::containers::group_hor>()})
+	if (auto & top{root->emplace<UI::containers::group_hor<>>()})
 		{
 		top.alignment = UI::align_ver::top;
 		top.sizes.max_y = 64;
 
-		if (auto & padding{top.emplace<UI::wrappers::padding>(utils::math::geometry::aabb{.ll{8}, .up{8}, .rr{8}, .dw{8}})})
+		if (auto & padding{top.emplace<UI::containers::padding<>>(utils::math::geometry::aabb{.ll{8}, .up{8}, .rr{8}, .dw{8}})})
 			{
 			if (auto & element{padding.emplace<UI::widgets::dummy>()})
 				{
@@ -183,7 +184,7 @@ UI::core::element_own sample_ui(utils::MS::window::base& window, const style& st
 				}
 			}
 
-		if (auto & padding{top.emplace<UI::wrappers::padding>(utils::math::geometry::aabb{.ll{8}, .up{8}, .rr{8}, .dw{8}})})
+		if (auto & padding{top.emplace<UI::containers::padding<>>(utils::math::geometry::aabb{.ll{8}, .up{8}, .rr{8}, .dw{8}})})
 			{
 			if (auto & element{padding.emplace<UI::widgets::dummy>()})
 				{
@@ -194,7 +195,7 @@ UI::core::element_own sample_ui(utils::MS::window::base& window, const style& st
 				}
 			}
 
-		if (auto & padding{top.emplace<UI::wrappers::padding>(utils::math::geometry::aabb{.ll{8}, .up{8}, .rr{8}, .dw{8}})})
+		if (auto & padding{top.emplace<UI::containers::padding<>>(utils::math::geometry::aabb{.ll{8}, .up{8}, .rr{8}, .dw{8}})})
 			{
 			if (auto & element{padding.emplace<UI::widgets::dummy>()})
 				{
@@ -204,7 +205,7 @@ UI::core::element_own sample_ui(utils::MS::window::base& window, const style& st
 				}
 			}
 
-		if (auto & padding{top.emplace<UI::wrappers::padding>(utils::math::geometry::aabb{.ll{8}, .up{8}, .rr{8}, .dw{8}})})
+		if (auto & padding{top.emplace<UI::containers::padding<>>(utils::math::geometry::aabb{.ll{8}, .up{8}, .rr{8}, .dw{8}})})
 			{
 			if (auto & element{padding.emplace<UI::widgets::dummy>()})
 				{
@@ -214,7 +215,7 @@ UI::core::element_own sample_ui(utils::MS::window::base& window, const style& st
 				}
 			}
 
-		if (auto & padding{top.emplace<UI::wrappers::padding>(utils::math::geometry::aabb{.ll{8}, .up{8}, .rr{8}, .dw{8}})})
+		if (auto & padding{top.emplace<UI::containers::padding<>>(utils::math::geometry::aabb{.ll{8}, .up{8}, .rr{8}, .dw{8}})})
 			{
 			if (auto & element{padding.emplace<UI::widgets::dummy>()})
 				{
@@ -228,12 +229,12 @@ UI::core::element_own sample_ui(utils::MS::window::base& window, const style& st
 	//auto root{std::make_unique<UI::containers::group_hor>()};
 	//root->alignment = UI::align_ver::top;
 	//auto& bottom{*root};
-	if (auto & bottom{root->emplace<UI::containers::group_hor>()})
+	if (auto & bottom{root->emplace<UI::containers::group_hor<>>()})
 		{
 		bottom.alignment = UI::align_ver::top;
 		bottom.sizes.max_y = 128;
 
-		if (auto & padding{bottom.emplace<UI::wrappers::padding>(utils::math::geometry::aabb{.ll{8}, .up{8}, .rr{8}, .dw{8}})})
+		if (auto & padding{bottom.emplace<UI::containers::padding<>>(utils::math::geometry::aabb{.ll{8}, .up{8}, .rr{8}, .dw{8}})})
 			{
 			if (auto & element{padding.emplace<UI::widgets::dummy>()})
 				{
@@ -245,7 +246,7 @@ UI::core::element_own sample_ui(utils::MS::window::base& window, const style& st
 
 		bottom.emplace<UI::widgets::spacer>();
 
-		if (auto & padding{bottom.emplace<UI::wrappers::padding>(utils::math::geometry::aabb{.ll{8}, .up{8}, .rr{8}, .dw{8}})})
+		if (auto & padding{bottom.emplace<UI::containers::padding<>>(utils::math::geometry::aabb{.ll{8}, .up{8}, .rr{8}, .dw{8}})})
 			{
 			if (auto & element{padding.emplace<UI::widgets::dummy>()})
 				{

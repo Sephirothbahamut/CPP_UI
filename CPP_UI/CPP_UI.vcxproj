@@ -151,6 +151,7 @@
     <ClInclude Include="UI\containers\one_of.h" />
     <ClInclude Include="UI\containers\overlay.h" />
     <ClInclude Include="UI\containers\group_ver.h" />
+    <ClInclude Include="UI\containers\padding.h" />
     <ClInclude Include="UI\core\base_types.h" />
     <ClInclude Include="UI\core\core.h" />
     <ClInclude Include="UI\drawables.h" />
@@ -172,8 +173,6 @@
     <ClInclude Include="UI\widgets\toggle.h" />
     <ClInclude Include="UI\widgets\window_drag.h" />
     <ClInclude Include="UI\window.h" />
-    <ClInclude Include="UI\wrappers.h" />
-    <ClInclude Include="UI\wrappers\padding.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

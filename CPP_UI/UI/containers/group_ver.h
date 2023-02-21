@@ -4,8 +4,13 @@
 
 namespace UI::inner::containers
 	{
-	struct group_ver : public core::container
+	template <size_t slots_count = 0, typename view_t = void>
+	struct group_ver : public core::container<slots_count, view_t>
 		{
+		using core::container<slots_count, view_t>::elements;
+		using core::container<slots_count, view_t>::rect;
+		using core::container<slots_count, view_t>::container;
+
 		core::align_hor alignment{core::align_hor::left};
 
 		virtual core::vec2f _get_size_min() const noexcept final override
@@ -56,21 +61,6 @@ namespace UI::inner::containers
 				
 				element.resize({std::min<float>(element.get_size_max().x, rect.width()), size});
 				}
-
-			//std::vector<constraints_t> constraints; constraints.reserve(elements.size());
-			//for (const auto& element_ptr : elements)
-			//	{
-			//	const auto& element{*element_ptr};
-			//	constraints.emplace_back(constraints_t::ver(element));
-			//	}
-			//auto sizes{calc_sizes({rect.height(), rect.width()}, constraints)};
-			//
-			//for (size_t i : utils::indices(elements))
-			//	{
-			//	auto& element{*elements[i]};
-			//	const auto& size{sizes[i]};
-			//	element.resize({size.second, size.first});
-			//	}
 			}
 		virtual void on_reposition() noexcept
 			{

@@ -27,20 +27,13 @@ namespace UI::inner::core
 	using elements_own = std::vector<element_own>;
 	using elements_obs = std::vector<element_obs>;
 	using element_ref  = element&;
-	
-	class owner;
-	using owner_own  = std  ::unique_ptr  <owner>;
-	using owner_obs  = utils::observer_ptr<owner>;
-	using owners_own = std::vector<owner_own>;
-	using owners_obs = std::vector<owner_obs>;
-	using owner_ref  = element&;
 
-	class widget;
+	struct widget;
 	using widget_own  = std  ::unique_ptr  <widget>;
 	using widget_obs  = utils::observer_ptr<widget>;
 	using widgets_own = std::vector<widget_own>;
 	using widgets_obs = std::vector<widget_obs>;
-	using widget_ref  = element&;
+	using widget_ref  = widget&;
 
 	enum class orientation_t { hor, ver };
 	enum class align_ver { top, middle, bottom };
@@ -56,6 +49,7 @@ namespace UI::inner::core
 	inline const utils::graphics::colour::rgba cont_br{1, 0, 0, .5 };
 	inline const utils::graphics::colour::rgba widg_bg{0, 1, 0, .05};
 	inline const utils::graphics::colour::rgba widg_br{0, 1, 0, .5 };
+	inline const utils::graphics::colour::rgba focus  {1, 1, 1, .5 };
 	inline const float finf{std::numeric_limits<float>::infinity()};
 	inline const float fnan{std::numeric_limits<float>::quiet_NaN()};
 
@@ -69,7 +63,8 @@ namespace UI::inner::core
 			cont_bg{context, UI::inner::core::cont_bg},
 			cont_br{context, UI::inner::core::cont_br},
 			widg_bg{context, UI::inner::core::widg_bg},
-			widg_br{context, UI::inner::core::widg_br}
+			widg_br{context, UI::inner::core::widg_br},
+			focus  {context, UI::inner::core::focus  }
 			{}
 
 		utils::MS::graphics::d2d::solid_brush elem_bg;
@@ -80,6 +75,7 @@ namespace UI::inner::core
 		utils::MS::graphics::d2d::solid_brush cont_br;
 		utils::MS::graphics::d2d::solid_brush widg_bg;
 		utils::MS::graphics::d2d::solid_brush widg_br;
+		utils::MS::graphics::d2d::solid_brush focus  ;
 		};
 #pragma endregion Constants
 

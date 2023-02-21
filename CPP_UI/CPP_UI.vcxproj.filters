@@ -28,9 +28,6 @@
     <Filter Include="Header Files\UI\widgets">
       <UniqueIdentifier>{366d4c9a-ba3a-4952-801b-a528038a1a97}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\UI\wrappers">
-      <UniqueIdentifier>{5482374a-bc95-4eba-a625-33ce7d1173d6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\resources">
       <UniqueIdentifier>{d5ed12ea-8893-4e2d-8fb4-fba751c9de97}</UniqueIdentifier>
     </Filter>
@@ -59,9 +56,6 @@
     <ClInclude Include="UI\widgets.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
-    <ClInclude Include="UI\wrappers.h">
-      <Filter>Header Files\UI</Filter>
-    </ClInclude>
     <ClInclude Include="UI\containers\common.h">
       <Filter>Header Files\UI\containers</Filter>
     </ClInclude>
@@ -88,9 +82,6 @@
     </ClInclude>
     <ClInclude Include="UI\widgets\spacer.h">
       <Filter>Header Files\UI\widgets</Filter>
-    </ClInclude>
-    <ClInclude Include="UI\wrappers\padding.h">
-      <Filter>Header Files\UI\wrappers</Filter>
     </ClInclude>
     <ClInclude Include="resources\asset_manager.h">
       <Filter>Header Files\resources</Filter>
@@ -139,6 +130,9 @@
     </ClInclude>
     <ClInclude Include="UI\widgets\tabbed.h">
       <Filter>Header Files\UI\widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\containers\padding.h">
+      <Filter>Header Files\UI\containers</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

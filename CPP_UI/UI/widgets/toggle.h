@@ -13,7 +13,7 @@ utils_disable_warnings_begin
 utils_disable_warning_msvc(4250)
 namespace UI::inner::widgets
 	{
-	class toggle : public core::widget, protected containers::one_of
+	class toggle : public core::container_widget<containers::one_of<6>>
 		{
 		public:
 			struct layers
@@ -27,25 +27,12 @@ namespace UI::inner::widgets
 				};
 			toggle(std::function<void(bool)> callback, layers&& layers) : callback{callback} 
 				{
-				containers::one_of::push(std::move(layers.normal_false));
-				containers::one_of::push(std::move(layers.normal_true ));
-				containers::one_of::push(std::move(layers.down_false  ));
-				containers::one_of::push(std::move(layers.down_true   ));
-				containers::one_of::push(std::move(layers.hover_false ));
-				containers::one_of::push(std::move(layers.hover_true  ));
-				}
-
-			using containers::one_of::align_hor;
-			using containers::one_of::align_ver;
-
-			virtual void debug_draw(const utils::MS::graphics::d2d::device_context& context, const core::debug_brushes& brushes) const noexcept override
-				{
-				containers::one_of::debug_draw(context, brushes);
-				}
-
-			virtual core::widget_obs get_mouseover(core::vec2f position) noexcept override
-				{
-				return core::widget::get_mouseover(position);
+				containers::one_of<6>::set(0, std::move(layers.normal_false));
+				containers::one_of<6>::set(1, std::move(layers.normal_true ));
+				containers::one_of<6>::set(2, std::move(layers.down_false  ));
+				containers::one_of<6>::set(3, std::move(layers.down_true   ));
+				containers::one_of<6>::set(4, std::move(layers.hover_false ));
+				containers::one_of<6>::set(5, std::move(layers.hover_true  ));
 				}
 
 			virtual bool on_focus_lose () override { set_pressed(false); return true; }
@@ -69,7 +56,7 @@ namespace UI::inner::widgets
 		private:
 			bool pressed{false};
 			bool hovered{false};
-			bool _state  {false};
+			bool _state {false};
 
 			void on_mouse_button_inner(const utils::input::mouse::button_id& id, const bool& state)
 				{

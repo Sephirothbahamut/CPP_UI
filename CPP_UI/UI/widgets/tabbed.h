@@ -7,73 +7,98 @@
 #include <utils/math/geometry/circle.h>
 
 #include "common.h"
+#include "../containers/group_ver.h"
+#include "../containers/group_hor.h"
 #include "../containers/one_of.h"
+#include "button.h"
 
-utils_disable_warnings_begin
-utils_disable_warning_msvc(4250)
 namespace UI::inner::widgets
 	{
-	class button : public core::widget, public containers::one_of
+	class tabbed : public core::element
 		{
 		public:
-			button(std::function<void()> callback) : callback{callback} {}
+			struct tab :  UI::inner::widgets::button
+				{
+				tab(layers&& layers) : UI::inner::widgets::button{[](){}, layers} {}
+				core::element_own content;
+				};
+
+		private:
+			std::vector<std::unique_ptr<tab>> tabs;
+
+			static core::element_ref extract_handle (std::unique_ptr<tab>& tab) { return *tab; }
+			static core::element_ref extract_content(std::unique_ptr<tab>& tab) { return *tab->content; }
+
+			using handles_view_t  = decltype(tabs | std::views::transform(&extract_handle ));
+			using contents_view_t = decltype(tabs | std::views::transform(&extract_content));
+
+		public:
+
+			tabbed() :
+				handles{root.emplace_at<containers::group_hor<0, handles_view_t >>(0, tabs | std::views::transform(&extract_handle ))},
+				content{root.emplace_at<containers::one_of   <0, contents_view_t>>(1, tabs | std::views::transform(&extract_content))}
+				{
+				}
+
+			
+			tab& push(std::unique_ptr<tab>&& element) noexcept
+				{
+				auto ptr{element.get()};
+				tabs.push_back(std::move(element));
+				update_views();
+				return *ptr;
+				}
+
+			template <typename T = core::element>
+			T& insert(size_t index, std::unique_ptr<tab>&& element) noexcept
+				{
+				auto ptr{element.get()};
+				tabs.insert(tabs.begin() + index, std::move(element));
+				update_views();
+				return *ptr;
+				}
+
+			virtual ~tabbed() noexcept {}
+
+			virtual core::vec2f _get_size_min() const noexcept final override { return root._get_size_min(); }
+			virtual core::vec2f _get_size_prf() const noexcept final override { return root._get_size_prf(); }
+			virtual core::vec2f _get_size_max() const noexcept final override { return root._get_size_max(); }
+			virtual void on_resize    () noexcept final override { root.on_resize    (); }
+			virtual void on_reposition() noexcept final override { root.on_reposition(); }
 
 			virtual void debug_draw(const utils::MS::graphics::d2d::device_context& context, const core::debug_brushes& brushes) const noexcept override
 				{
-				containers::one_of::debug_draw(context, brushes);
+				root.debug_draw(context, brushes);
+				}
+			virtual void draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
+				{
+				root.draw(context);
 				}
 
 			virtual core::widget_obs get_mouseover(core::vec2f position) noexcept override
 				{
-				return core::widget::get_mouseover(position);
-				}
-
-			virtual bool on_focus_lose () override { set_pressed(false); return true; }
-			virtual bool on_mouse_enter() override { set_hovered(true ); return true; }
-			virtual bool on_mouse_leave() override { set_hovered(false); return true; }
-			
-			virtual bool on_mouse_button(const utils::input::mouse::button_id& id, const bool& state) override
-				{
-				on_mouse_button_inner(id, state);
-				return true;
-				}
-
-			std::function<void()> callback;
-
-		private:
-			bool _pressed{false};
-			bool _hovered{false};
-
-			void on_mouse_button_inner(const utils::input::mouse::button_id& id, const bool& state)
-				{
-				if (id == utils::input::mouse::button_id::left)
+				if (handles.get_rect().contains(position))
 					{
-					if (_hovered)
+					for (auto index : utils::indices(handles.elements))
 						{
-						if (state) { set_pressed(true); return; }
-						else if (_pressed) { callback(); }
+						if (handles.elements[index]->get_rect().contains(position))
+							{
+							content.current_index = index;
+							}
 						}
 					}
-				set_pressed(false);
+				else if(content.get_rect().contains(position)) { return content.get_mouseover(position); }
 				}
 
-			void set_pressed(bool state) noexcept
-				{
-				_pressed = state;
-				update_index();
-				}
-			void set_hovered(bool state) noexcept
-				{
-				_hovered = state;
-				update_index();
-				}
+		private:
+			containers::group_ver<2> root;
+			containers::group_hor<0, handles_view_t >& handles;
+			containers::one_of   <0, contents_view_t>& content;
 
-			void update_index() noexcept
+			void update_views() noexcept
 				{
-				     if (_pressed) { if(elements.size()    ) { current_index = elements.size() - 1; } }
-				else if (_hovered) { if(elements.size() > 1) { current_index = elements.size() - 2; } }
-				else { current_index = 0; }
+				handles.elements = tabs | std::views::transform(&extract_handle );
+				content.elements = tabs | std::views::transform(&extract_content);
 				}
 		};
 	}
-utils_disable_warnings_end

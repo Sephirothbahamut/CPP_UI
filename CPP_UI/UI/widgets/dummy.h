@@ -10,7 +10,7 @@
 
 namespace UI::inner::widgets
 	{
-	struct dummy : core::widget
+	struct dummy : core::element_widget
 		{
 		virtual void draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
 			{

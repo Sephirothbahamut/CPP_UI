@@ -6,8 +6,13 @@
 
 namespace UI::inner::containers
 	{
-	struct overlay : public core::container
+	template <size_t slots_count = 0, typename view_t = void>
+	struct overlay : public core::container<slots_count, view_t>
 		{
+		using core::container<slots_count, view_t>::elements;
+		using core::container<slots_count, view_t>::rect;
+		using core::container<slots_count, view_t>::container;
+
 		core::align_hor align_hor{core::align_hor::left};
 		core::align_ver align_ver{core::align_ver::top };
 
@@ -61,7 +66,7 @@ namespace UI::inner::containers
 				element_ptr->resize(rect.size());
 				}
 			}
-		virtual void on_reposition() noexcept
+		virtual void on_reposition() noexcept override
 			{
 			for (auto& element_ptr : elements)
 				{

@@ -9,7 +9,7 @@
 
 namespace UI::inner::widgets
 	{
-	struct window_drag : core::widget
+	struct window_drag : core::element_widget
 		{
 		window_drag(utils::MS::window::base& window) : window_ptr{&window} {}
 

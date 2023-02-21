@@ -10,10 +10,10 @@
 #include "../containers/one_of.h"
 
 utils_disable_warnings_begin
-utils_disable_warning_msvc(4250)
+
 namespace UI::inner::widgets
 	{
-	class button : public core::widget, protected containers::one_of
+	class button : public core::container_widget<containers::one_of<3>>
 		{
 		public:
 			struct layers
@@ -24,22 +24,9 @@ namespace UI::inner::widgets
 				};
 			button(std::function<void()> callback, layers&& layers) : callback{callback}
 				{
-				containers::one_of::push(std::move(layers.normal));
-				containers::one_of::push(std::move(layers.down  ));
-				containers::one_of::push(std::move(layers.hover ));
-				}
-
-			using containers::one_of::align_hor;
-			using containers::one_of::align_ver;
-
-			virtual void debug_draw(const utils::MS::graphics::d2d::device_context& context, const core::debug_brushes& brushes) const noexcept override
-				{
-				containers::one_of::debug_draw(context, brushes);
-				}
-
-			virtual core::widget_obs get_mouseover(core::vec2f position) noexcept override
-				{
-				return core::widget::get_mouseover(position);
+				containers::one_of<3>::set(0, std::move(layers.normal));
+				containers::one_of<3>::set(1, std::move(layers.down  ));
+				containers::one_of<3>::set(2, std::move(layers.hover ));
 				}
 
 			virtual bool on_focus_lose () override { set_pressed(false); return true; }
@@ -55,6 +42,8 @@ namespace UI::inner::widgets
 			std::function<void()> callback;
 
 		private:
+			containers::one_of<3> graphics;
+
 			bool pressed{false};
 			bool hovered{false};
 
