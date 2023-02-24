@@ -6,7 +6,7 @@
 #include "containers.h"
 #include "widgets.h"
 #include "drawables.h"
-#include "manager.h"
+#include "input.h"
 #include "window.h"
 
 namespace UI
@@ -39,19 +39,14 @@ namespace UI
 		using text            = inner::drawables::text           ;
 		using rect            = inner::drawables::rect           ;
 		}
-	//namespace generation
-	//	{
-	//	template <std::derived_from<inner::core::element> T>
-	//	using generator = inner::generation::generator<T>;
-	//
-	//	template <std::derived_from<inner::core::element> T>
-	//	using spawner = inner::generation::spawner<T>;
-	//	}
 
-	using initializer = inner::initializer;
-	using manager     = inner::manager;
-	using window      = inner::window;
+	template <core::concepts::container container_t = core::container_own<1>>
+	using input_wrapper = inner::input_wrapper<container_t>;
 
+	using initializer   = inner::initializer;
+
+	using window        = inner::window;
+	
 	namespace all
 		{
 		using namespace UI;

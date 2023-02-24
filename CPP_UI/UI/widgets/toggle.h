@@ -84,12 +84,12 @@ namespace UI::inner::widgets
 
 			void update_index() noexcept
 				{
-				     if (pressed && !_state && elements[2]) { current_index = 2; }
-				else if (pressed &&  _state && elements[3]) { current_index = 3; }
-				else if (hovered && !_state && elements[4]) { current_index = 4; }
-				else if (hovered &&  _state && elements[5]) { current_index = 5; }
-				else if (           !_state && elements[0]) { current_index = 0; }
-				else if (            _state && elements[1]) { current_index = 1; }
+				     if (pressed && !_state && elements[2]) { set_current_index(2); }
+				else if (pressed &&  _state && elements[3]) { set_current_index(3); }
+				else if (hovered && !_state && elements[4]) { set_current_index(4); }
+				else if (hovered &&  _state && elements[5]) { set_current_index(5); }
+				else if (           !_state && elements[0]) { set_current_index(0); }
+				else if (            _state && elements[1]) { set_current_index(1); }
 				}
 		};
 	}

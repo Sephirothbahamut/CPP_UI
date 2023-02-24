@@ -162,7 +162,7 @@
     <ClInclude Include="UI\drawables\text.h" />
     <ClInclude Include="UI\generation.h" />
     <ClInclude Include="UI\initializer.h" />
-    <ClInclude Include="UI\manager.h" />
+    <ClInclude Include="UI\input.h" />
     <ClInclude Include="UI\UI.h" />
     <ClInclude Include="UI\widgets.h" />
     <ClInclude Include="UI\widgets\button.h" />

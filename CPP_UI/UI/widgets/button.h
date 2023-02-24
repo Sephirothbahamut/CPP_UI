@@ -73,9 +73,9 @@ namespace UI::inner::widgets
 
 			void update_index() noexcept
 				{
-				     if (pressed && elements[1]) { current_index = 1; }
-				else if (hovered && elements[2]) { current_index = 2; }
-				else if (           elements[0]) { current_index = 0; }
+				     if (pressed && elements[1]) { set_current_index(1); }
+				else if (hovered && elements[2]) { set_current_index(2); }
+				else if (           elements[0]) { set_current_index(0); }
 				}
 		};
 	}

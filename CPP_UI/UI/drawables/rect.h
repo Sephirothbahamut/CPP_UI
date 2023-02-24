@@ -12,7 +12,7 @@ namespace UI::inner::drawables
 	{
 	struct rect : shape
 		{
-		virtual void draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
+		virtual void _draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
 			{
 			if (draw_shape_data.brush_fill_opt)
 				{
@@ -28,7 +28,7 @@ namespace UI::inner::drawables
 		{
 		float rounding_radius{1.f};
 
-		virtual void draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
+		virtual void _draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
 			{
 			D2D1_ROUNDED_RECT d2d_roundrect{.rect{utils::MS::graphics::d2d::cast(get_rect())}, .radiusX{rounding_radius}, .radiusY{rounding_radius}};
 

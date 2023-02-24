@@ -12,7 +12,7 @@ namespace UI::inner::widgets
 	{
 	struct dummy : core::element_widget
 		{
-		virtual void draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
+		virtual void _draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
 			{
 			utils::MS::graphics::d2d::solid_brush tmp{context, utils::graphics::colour::rgba_f{0.f, 0.f, 1.f, 1.f}};
 			context->FillEllipse(D2D1_ELLIPSE{.point{.x{get_rect().center.x}, .y{get_rect().center.y}}, .radiusX{get_rect().width() / 2.f}, .radiusY{get_rect().height() / 2.f}}, tmp.get());

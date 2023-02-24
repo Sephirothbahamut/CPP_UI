@@ -30,9 +30,10 @@ namespace UI::inner::core
 				{
 				debug_draw_rect(context, brushes.elem_bg, brushes.elem_br);
 				}
-			virtual void draw(const utils::MS::graphics::d2d::device_context& context) const noexcept {}
+			void draw(const utils::MS::graphics::d2d::device_context& context) const noexcept { should_redraw = false; _draw(context); }
+			virtual utils::observer_ptr<const element> get_should_redraw() const noexcept { return should_redraw ? this : nullptr; }
 
-			virtual widget_obs    get_mouseover(vec2f position) noexcept { return nullptr; }
+			virtual widget_obs get_mouseover(vec2f position) noexcept { return nullptr; }
 
 			// Dynamic UI
 			void resize_checked(vec2f size)
@@ -53,8 +54,9 @@ namespace UI::inner::core
 				size.y = std::min(size.y, max_a.y);
 				resize(size);
 				}
-			void resize    (vec2f max_size)          { rect.size    () = max_size; on_resize    (); };
-			void reposition(vec2f position) noexcept { rect.position() = position; on_reposition(); };
+
+			void resize    (vec2f max_size)          { rect.size    () = max_size; on_resize    (); should_redraw = true; };
+			void reposition(vec2f position) noexcept { rect.position() = position; on_reposition(); should_redraw = true; };
 
 			custom_sizes_t sizes;
 
@@ -77,6 +79,7 @@ namespace UI::inner::core
 
 		protected:
 			utils::math::geometry::aabb rect;
+			mutable bool should_redraw{false};
 
 			virtual vec2f _get_size_min() const noexcept { return {0.f , 0.f }; }
 			virtual vec2f _get_size_max() const noexcept { return {finf, finf}; }
@@ -90,6 +93,8 @@ namespace UI::inner::core
 					max.y == finf ? std::max( 64.f, min.y) : min.y + ((max.y - min.y) / 2.f)
 					};
 				}
+
+			virtual void _draw(const utils::MS::graphics::d2d::device_context& context) const noexcept {}
 
 			virtual void on_resize    () {}
 			virtual void on_reposition() {}
@@ -113,13 +118,6 @@ namespace UI::inner::core
 					element.debug_draw(context, brushes);
 					}
 				}
-			virtual void draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
-				{
-				for (const auto& element : elements_view)
-					{
-					element.draw(context);
-					}
-				}
 
 			virtual widget_obs get_mouseover(vec2f position) noexcept override
 				{
@@ -128,6 +126,32 @@ namespace UI::inner::core
 					if (widget_obs ret{element.get_mouseover(position)}) { return ret; }
 					}
 				return nullptr;
+				}
+
+			virtual utils::observer_ptr<const element> get_should_redraw() const noexcept 
+				{
+				if (auto ret{element::get_should_redraw()}) { return ret; }
+
+				utils::observer_ptr<const element> ret{nullptr};
+
+				//if more than one sub-element must be redrawn, the whole container should be
+				for (const auto& element : elements_view)
+					{
+					auto tmp{element.get_should_redraw()};
+					if (ret && tmp) { return this; }
+					ret = tmp;
+					}
+
+				return ret;
+				}
+
+		protected:
+			virtual void _draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
+				{
+				for (const auto& element : elements_view)
+					{
+					element.draw(context);
+					}
 				}
 
 		private:

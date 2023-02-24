@@ -47,7 +47,7 @@
     <ClInclude Include="UI\generation.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
-    <ClInclude Include="UI\manager.h">
+    <ClInclude Include="UI\input.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
     <ClInclude Include="UI\UI.h">

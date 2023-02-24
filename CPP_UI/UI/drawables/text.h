@@ -20,7 +20,7 @@ namespace UI::inner::drawables
 
 			utils::MS::graphics::d2d::brush brush;
 
-			virtual void draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
+			virtual void _draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
 				{
 				context->DrawTextLayout(D2D1::Point2F(rect.ll, rect.up), layout.get(), brush.get());
 				}

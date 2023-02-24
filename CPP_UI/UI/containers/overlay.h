@@ -12,7 +12,7 @@ namespace UI::inner::containers
 		core::align_hor align_hor{core::align_hor::left};
 		core::align_ver align_ver{core::align_ver::top };
 
-		virtual core::widget_obs get_mouseover(core::vec2f position) noexcept
+		virtual core::widget_obs get_mouseover(core::vec2f position) noexcept override
 			{
 			for (auto& element : std::ranges::reverse_view{container_t::elements_view})
 				{

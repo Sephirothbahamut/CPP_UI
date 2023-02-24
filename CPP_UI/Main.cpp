@@ -115,6 +115,7 @@ std::unique_ptr<UI::widgets::toggle> make_toggle(const style& style, std::functi
 UI::core::element_own title_bar(utils::MS::window::base& window, const style& style, const std::wstring& string)
 	{
 	auto root{std::make_unique<UI::containers::overlay<>>()};
+
 	root->sizes.max_y = 24;
 	root->sizes.min_y = 24;
 
@@ -163,12 +164,15 @@ UI::core::element_own title_bar(utils::MS::window::base& window, const style& st
 
 UI::core::element_own sample_ui(utils::MS::window::base& window, const style& style, const std::wstring& string)
 	{
-	auto root{std::make_unique<UI::containers::group_ver<>>()};
-	root->alignment = UI::align_hor::left;
+	auto& default_mouse{window.get_module_ptr<utils::MS::window::input::mouse>()->default_mouse};
+	auto root{std::make_unique<UI::input_wrapper<>>(default_mouse)};
 
-	root->push(title_bar(window, style, string));
+	auto& ver{root->emplace<UI::containers::group_ver<>>()};
+	ver.alignment = UI::align_hor::left;
 
-	if (auto & top{root->emplace<UI::containers::group_hor<>>()})
+	ver.push(title_bar(window, style, string));
+
+	if (auto & top{ver.emplace<UI::containers::group_hor<>>()})
 		{
 		top.alignment = UI::align_ver::top;
 		top.sizes.max_y = 64;
@@ -226,10 +230,7 @@ UI::core::element_own sample_ui(utils::MS::window::base& window, const style& st
 			}
 		}
 
-	//auto root{std::make_unique<UI::containers::group_hor>()};
-	//root->alignment = UI::align_ver::top;
-	//auto& bottom{*root};
-	if (auto & bottom{root->emplace<UI::containers::group_hor<>>()})
+	if (auto & bottom{ver.emplace<UI::containers::group_hor<>>()})
 		{
 		bottom.alignment = UI::align_ver::top;
 		bottom.sizes.max_y = 128;
@@ -257,9 +258,9 @@ UI::core::element_own sample_ui(utils::MS::window::base& window, const style& st
 			}
 		}
 
-	//if (auto & body{root->emplace<UI::containers::group_ver>()})
+	//if (auto & body{ver.emplace<UI::containers::group_ver>()})
 		{
-		auto& body{*root};
+		auto& body{ver};
 		body.push(make_button(style, L"Hello world!", []() {std::cout << "Hello world!" << std::endl; }));
 		body.push(make_button(style, L"Hello cats! ", []() {std::cout << "Hello cats! " << std::endl; }));
 		body.push(make_button(style, L"Hello dogs! ", []() {std::cout << "Hello dogs! " << std::endl; }));
@@ -268,7 +269,7 @@ UI::core::element_own sample_ui(utils::MS::window::base& window, const style& st
 		body.push(make_toggle(style, [](bool v) {std::cout << (v ? "Hello" : "Goodbye") << std::endl; }));
 		}
 
-	root->emplace<UI::widgets::spacer>();
+	ver.emplace<UI::widgets::spacer>();
 
 	return std::move(root);
 	}
@@ -485,22 +486,23 @@ int main()
 
 		//Setup UI
 
-		auto& default_mouse{window.get_module_ptr<utils::MS::window::input::mouse>()->default_mouse};
 		
-		UI::manager ui_manager{ui_initializer, sample_ui(window, style, L"Donald Fauntleroy Duck"), default_mouse};
+		auto& window_ui{window.emplace_module_from_create_info(UI::window::create_info{.root{sample_ui(window, style, L"Donald Fauntleroy Duck")}})};
 		
-		auto& window_ui{window.emplace_module_from_create_info(UI::window::create_info{.manager_ptr{&ui_manager}})};
-		
-		draw_operations.emplace([&ui_manager](const utils::MS::graphics::d2d::device_context& context)
+		draw_operations.emplace([&window_ui, &ui_initializer](const utils::MS::graphics::d2d::device_context& context)
 			{
-			ui_manager.debug_draw(context);
-			ui_manager.draw(context);
+			window_ui.get_root()->debug_draw(context, ui_initializer.get_debug_brushes());
+			window_ui.get_root()->draw(context);
 			});
+
+		auto window_graphics{window.get_module_ptr<utils::MS::graphics::d2d::window::composition_swap_chain>()};
 
 		window.show();
 		while (window.is_open())
 			{
 			window.wait_event();
+
+			if (window_ui.get_root()->get_should_redraw()) { window_graphics->draw(); }
 			}
 		}};
 
