@@ -12,7 +12,7 @@
 #include "../containers/one_of.h"
 #include "button.h"
 
-namespace UI::inner::widgets
+namespace UI::widgets
 	{
 	class tabbed : public core::element
 		{

@@ -3,16 +3,17 @@
 #include <utils/math/math.h>
 #include "core/core.h"
 
-namespace UI::inner
+namespace UI
 	{
-
+	template <bool owning = true>
 	class window : public utils::MS::window::module
 		{
 		public:
+			using root_t = std::conditional_t<owning, core::element_own, core::element_obs>;
 			struct create_info
 				{
 				using module_type = window;
-				core::element_own&& root;
+				root_t&& root;
 				};
 
 			window(utils::MS::window::base& base, const create_info& create_info) :
@@ -28,8 +29,7 @@ namespace UI::inner
 					switch (msg)
 						{
 						case WM_SIZE:
-							root->resize(utils::math::vec2u{LOWORD(lparam), HIWORD(lparam)});
-							root->reposition(root->get_rect().ul());
+							resize(utils::math::vec2u{LOWORD(lparam), HIWORD(lparam)});
 							return utils::MS::window::procedure_result::next(0);
 
 						case WM_GETMINMAXINFO:
@@ -40,11 +40,17 @@ namespace UI::inner
 				return utils::MS::window::procedure_result::next();
 				}
 
-			const core::element_own& get_root() const noexcept { return root; }
-			      core::element_own& get_root()       noexcept { return root; }
+			const root_t& get_root() const noexcept { return root; }
+			      root_t& get_root()       noexcept { return root; }
+
+			void resize(utils::math::vec2f size)
+				{
+				root->resize(size);
+				root->reposition(root->get_rect().ul());
+				}
 
 		private:
-			core::element_own root{nullptr};
+			root_t root{nullptr};
 
 			void getminmaxinfo(LPARAM lparam)
 				{

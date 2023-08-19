@@ -6,7 +6,7 @@
 #include "core/core.h"
 #include "widgets/window_drag.h"
 
-namespace UI::inner
+namespace UI
 	{
 	class initializer
 		{

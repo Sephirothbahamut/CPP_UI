@@ -44,12 +44,6 @@
     <ClInclude Include="UI\containers.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
-    <ClInclude Include="UI\generation.h">
-      <Filter>Header Files\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="UI\input.h">
-      <Filter>Header Files\UI</Filter>
-    </ClInclude>
     <ClInclude Include="UI\UI.h">
       <Filter>Header Files\UI</Filter>
     </ClInclude>
@@ -59,13 +53,10 @@
     <ClInclude Include="UI\containers\common.h">
       <Filter>Header Files\UI\containers</Filter>
     </ClInclude>
-    <ClInclude Include="UI\containers\group_hor.h">
+    <ClInclude Include="UI\containers\linear.h">
       <Filter>Header Files\UI\containers</Filter>
     </ClInclude>
     <ClInclude Include="UI\containers\overlay.h">
-      <Filter>Header Files\UI\containers</Filter>
-    </ClInclude>
-    <ClInclude Include="UI\containers\group_ver.h">
       <Filter>Header Files\UI\containers</Filter>
     </ClInclude>
     <ClInclude Include="UI\core\base_types.h">
@@ -133,6 +124,15 @@
     </ClInclude>
     <ClInclude Include="UI\containers\padding.h">
       <Filter>Header Files\UI\containers</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\containers\resizable.h">
+      <Filter>Header Files\UI\containers</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\containers\input.h">
+      <Filter>Header Files\UI\containers</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\widgets\dropdown.h">
+      <Filter>Header Files\UI\widgets</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

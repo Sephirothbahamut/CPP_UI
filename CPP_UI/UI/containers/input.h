@@ -3,35 +3,21 @@
 #include <vector>
 #include <optional>
 
-#include "core/core.h"
-#include "initializer.h"
+#include "../core/core.h"
+#include "../initializer.h"
 
 #include <utils/input/mouse.h>
 
-namespace UI::inner
+namespace UI::containers
 	{
-	template <core::concepts::container container_t = core::container_own<1>>
-	class input_wrapper : public container_t
+	template <core::concepts::wrapper wrapper_t = core::wrapper_own>
+	class input : public wrapper_t
 		{
 		public:
-			input_wrapper(utils::input::mouse& mouse) :
+			input(utils::input::mouse& mouse) :
 				handle_pos{mouse.position.on_changed.make_unique([this](const utils::math::vec2l& position, const utils::math::vec2l&           ) { moved (position ); })},
 				handle_lve{mouse.leave   .on_trigger.make_unique([this](                                                                        ) { leave (         ); })},
 				handle_btn{mouse.buttons .on_changed.make_unique([this](const utils::input::mouse::button_id& id, const bool& state, const bool&) { button(id, state); })} {}
-			
-
-			virtual core::vec2f _get_size_min() const noexcept final override { return container_t::elements_view[0].get_size_min(); }
-			virtual core::vec2f _get_size_prf() const noexcept final override { return container_t::elements_view[0].get_size_prf(); }
-			virtual core::vec2f _get_size_max() const noexcept final override { return container_t::elements_view[0].get_size_max(); }
-
-			virtual void on_resize()  final override
-				{
-				container_t::elements_view[0].resize(container_t::rect.size());
-				}
-			virtual void on_reposition() noexcept
-				{
-				container_t::elements_view[0].reposition(container_t::rect.position());
-				};
 
 		private:
 
@@ -48,7 +34,8 @@ namespace UI::inner
 				{
 				bool redraw{false};
 
-				core::widget_obs new_hover{container_t::elements_view[0].get_mouseover(position)};
+				core::widget_obs new_hover{wrapper_t::get_element().get_mouseover(position)};
+
 				if (new_hover != hover)
 					{
 					//if (new_hover) { std::cout << "UI mouseover: @" << new_hover << ", type " << typeid(*new_hover).name() << std::endl; }
@@ -61,9 +48,16 @@ namespace UI::inner
 					if (new_hover)
 						{
 						redraw = new_hover->on_mouse_enter() || redraw;
+						redraw = new_hover->on_mouse_move(position) || redraw;
 						}
 					hover = new_hover;
 					}
+				else if (hover)
+					{
+					redraw = new_hover->on_mouse_move(position);
+					}
+
+				if (focus) { redraw = focus->on_mouse_move(position) || redraw; }
 
 				if (redraw) { core::element::should_redraw = true; }
 				}

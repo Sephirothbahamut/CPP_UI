@@ -14,7 +14,7 @@
 
 #include <utils/MS/graphics/d2d.h>
 
-namespace UI::inner::core
+namespace UI::core
 	{
 #pragma region Support
 	using vec2f = utils::math::vec2f;
@@ -56,15 +56,15 @@ namespace UI::inner::core
 	struct debug_brushes
 		{
 		debug_brushes(const utils::MS::graphics::d2d::device_context& context) :
-			elem_bg{context, UI::inner::core::elem_bg},
-			elem_br{context, UI::inner::core::elem_br},
-			wrap_bg{context, UI::inner::core::wrap_bg},
-			wrap_br{context, UI::inner::core::wrap_br},
-			cont_bg{context, UI::inner::core::cont_bg},
-			cont_br{context, UI::inner::core::cont_br},
-			widg_bg{context, UI::inner::core::widg_bg},
-			widg_br{context, UI::inner::core::widg_br},
-			focus  {context, UI::inner::core::focus  }
+			elem_bg{context, UI::core::elem_bg},
+			elem_br{context, UI::core::elem_br},
+			wrap_bg{context, UI::core::wrap_bg},
+			wrap_br{context, UI::core::wrap_br},
+			cont_bg{context, UI::core::cont_bg},
+			cont_br{context, UI::core::cont_br},
+			widg_bg{context, UI::core::widg_bg},
+			widg_br{context, UI::core::widg_br},
+			focus  {context, UI::core::focus  }
 			{}
 
 		utils::MS::graphics::d2d::solid_brush elem_bg;
@@ -176,13 +176,30 @@ namespace UI::inner::core
 			__declspec(property(get = get_prf, put = set_prf)) vec2f prf;
 			__declspec(property(get = get_max, put = set_max)) vec2f max;
 
-			__declspec(property(put = set_min_x)) float min_x;
-			__declspec(property(put = set_min_y)) float min_y;
-			__declspec(property(put = set_prf_x)) float prf_x;
-			__declspec(property(put = set_prf_y)) float prf_y;
-			__declspec(property(put = set_max_x)) float max_x;
-			__declspec(property(put = set_max_y)) float max_y;
+			__declspec(property(get = get_min_x, put = set_min_x)) float min_x;
+			__declspec(property(get = get_min_y, put = set_min_y)) float min_y;
+			__declspec(property(get = get_prf_x, put = set_prf_x)) float prf_x;
+			__declspec(property(get = get_prf_y, put = set_prf_y)) float prf_y;
+			__declspec(property(get = get_max_x, put = set_max_x)) float max_x;
+			__declspec(property(get = get_max_y, put = set_max_y)) float max_y;
 #pragma endregion Properties
+
+			void set_x(float min, float prf, float max)
+				{
+				if (std::isnan(prf)) { if (min > max) { throw sizes_error; } }
+				else if (min > prf || max < prf) { throw sizes_error; }
+				_min.x = min;
+				_prf.x = prf;
+				_max.x = max;
+				}
+			void set_y(float min, float prf, float max)
+				{
+				if (std::isnan(prf)) { if (min > max) { throw sizes_error; } }
+				else if (min > prf || max < prf) { throw sizes_error; }
+				_min.y = min;
+				_prf.y = prf;
+				_max.y = max;
+				}
 
 		private:
 			inline static const std::runtime_error sizes_error{"Trying to assign invalid custom sizes. The following must be true for both x and y: _min <= _max."};

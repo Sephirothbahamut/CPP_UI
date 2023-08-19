@@ -11,7 +11,7 @@
 
 utils_disable_warnings_begin
 
-namespace UI::inner::widgets
+namespace UI::widgets
 	{
 	class button : public core::container_widget<containers::one_of<core::container_own<3>>>
 		{

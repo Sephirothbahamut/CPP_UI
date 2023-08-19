@@ -7,7 +7,7 @@
 #include "common.h"
 #include <utils/MS/window/window.h>
 
-namespace UI::inner::widgets
+namespace UI::widgets
 	{
 	struct window_drag : core::element_widget
 		{

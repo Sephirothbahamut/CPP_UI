@@ -7,7 +7,7 @@
 
 #include "common.h"
 
-namespace UI::inner::drawables
+namespace UI::drawables
 	{
 	struct text : shape
 		{

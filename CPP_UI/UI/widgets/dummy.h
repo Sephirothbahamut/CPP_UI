@@ -8,7 +8,7 @@
 
 #include "common.h"
 
-namespace UI::inner::widgets
+namespace UI::widgets
 	{
 	struct dummy : core::element_widget
 		{

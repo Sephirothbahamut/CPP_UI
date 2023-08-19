@@ -5,4 +5,5 @@
 #include "widgets/button.h"
 #include "widgets/toggle.h"
 #include "widgets/window_drag.h"
+#include "widgets/dropdown.h"
 //#include "widgets/tabbed.h"

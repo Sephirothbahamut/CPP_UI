@@ -8,7 +8,7 @@
 
 #include "base_types.h"
 
-namespace UI::inner::core
+namespace UI::core
 	{
 	class element
 		{
@@ -100,61 +100,119 @@ namespace UI::inner::core
 			virtual void on_reposition() {}
 		};
 
-	template <typename VIEW_T>
-		//requires(std::same_as<core::element_ref, decltype(*(VIEW_T{}.begin()))>)
-	class container_obs : public element
+	namespace details
 		{
-		public:
-			using view_t = VIEW_T;
-			container_obs(view_t view) : elements_view{view} {}
+		template <typename VIEW_T, typename CVIEW_T>
+		//requires(std::same_as<core::element_ref, decltype(*(VIEW_T{}.begin()))>)
+		class container_elements_view_interface : public element
+			{
+			public:
+				using  view_t =  VIEW_T;
+				using cview_t = CVIEW_T;
 
-			view_t elements_view;
-			
-			virtual void debug_draw(const utils::MS::graphics::d2d::device_context& context, const debug_brushes& brushes) const noexcept override
-				{
-				debug_draw_rect(context, brushes.cont_bg, brushes.cont_br);
-				for (const auto& element : elements_view)
+				virtual        view_t get_elements_view()       noexcept = 0;
+				virtual const cview_t get_elements_view() const noexcept = 0;
+
+				virtual void debug_draw(const utils::MS::graphics::d2d::device_context& context, const debug_brushes& brushes) const noexcept override
 					{
-					element.debug_draw(context, brushes);
-					}
-				}
-
-			virtual widget_obs get_mouseover(vec2f position) noexcept override
-				{
-				for (auto& element : elements_view)
-					{
-					if (widget_obs ret{element.get_mouseover(position)}) { return ret; }
-					}
-				return nullptr;
-				}
-
-			virtual utils::observer_ptr<const element> get_should_redraw() const noexcept 
-				{
-				if (auto ret{element::get_should_redraw()}) { return ret; }
-
-				utils::observer_ptr<const element> ret{nullptr};
-
-				//if more than one sub-element must be redrawn, the whole container should be
-				for (const auto& element : elements_view)
-					{
-					auto tmp{element.get_should_redraw()};
-					if (ret && tmp) { return this; }
-					ret = tmp;
+					debug_draw_rect(context, brushes.cont_bg, brushes.cont_br);
+					for (const auto& element : get_elements_view())
+						{
+						element.debug_draw(context, brushes);
+						}
 					}
 
-				return ret;
-				}
-
-		protected:
-			virtual void _draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
-				{
-				for (const auto& element : elements_view)
+				virtual widget_obs get_mouseover(vec2f position) noexcept override
 					{
-					element.draw(context);
+					for (auto& element : get_elements_view())
+						{
+						if (widget_obs ret{element.get_mouseover(position)}) { return ret; }
+						}
+					return nullptr;
 					}
-				}
 
-		private:
+				virtual utils::observer_ptr<const element> get_should_redraw() const noexcept
+					{
+					if (auto ret{element::get_should_redraw()}) { return ret; }
+
+					utils::observer_ptr<const element> ret{nullptr};
+
+					//if more than one sub-element must be redrawn, the whole container should be
+					for (const auto& element : get_elements_view())
+						{
+						auto tmp{element.get_should_redraw()};
+						if (ret && tmp) { return this; }
+						ret = tmp;
+						}
+
+					return ret;
+					}
+
+			protected:
+				virtual void _draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
+					{
+					for (const auto& element : get_elements_view())
+						{
+						element.draw(context);
+						}
+					}
+			};
+		
+		class wrapper_element_view_interface : public element
+			{
+			public:
+				virtual       element_ref get_element()       noexcept = 0;
+				virtual const element_ref get_element() const noexcept = 0;
+
+				virtual void debug_draw(const utils::MS::graphics::d2d::device_context& context, const debug_brushes& brushes) const noexcept override
+					{
+					element::debug_draw_rect(context, brushes.wrap_bg, brushes.wrap_br);
+					get_element().debug_draw(context, brushes);
+					}
+
+				virtual widget_obs get_mouseover(vec2f position) noexcept override
+					{
+					return get_element().get_mouseover(position);
+					}
+
+				virtual utils::observer_ptr<const element> get_should_redraw() const noexcept
+					{
+					if (auto ret{element::get_should_redraw()}) { return ret; }
+					return get_element().get_should_redraw();
+					}
+
+			protected:
+				virtual void _draw(const utils::MS::graphics::d2d::device_context& context) const noexcept override
+					{
+					get_element().draw(context);
+					}
+
+				virtual core::vec2f _get_size_min() const noexcept override { return get_element().get_size_min(); }
+				virtual core::vec2f _get_size_prf() const noexcept override { return get_element().get_size_prf(); }
+				virtual core::vec2f _get_size_max() const noexcept override { return get_element().get_size_max(); }
+
+				virtual void on_resize    () override { get_element().resize    (rect.size    ()); }
+				virtual void on_reposition() noexcept { get_element().reposition(rect.position()); }
+			};
+		}
+
+	template <typename VIEW_T, typename CVIEW_T>
+	struct container_obs : details::container_elements_view_interface<VIEW_T, CVIEW_T>
+		{
+		using view_t = VIEW_T;
+		view_t elements_view;
+
+		container_obs(view_t view) : elements_view{view} {}
+
+		virtual       view_t get_elements_view()       override { return elements_view; }
+		virtual const view_t get_elements_view() const override { return elements_view; }
+		};
+
+	struct wrapper_obs : details::wrapper_element_view_interface
+		{
+		element_obs element{nullptr};
+		virtual       element_ref get_element()       noexcept { return *element; };
+		virtual const element_ref get_element() const noexcept { return *element; };
 		};
 
 	namespace details
@@ -180,41 +238,47 @@ namespace UI::inner::core
 				elements_t elements;
 
 			protected:
-				static core::element_ref extract_element(core::element_own& element_ptr) noexcept { return *element_ptr; }
-				auto make_extract_view() { return elements | std::views::transform(&extract_element); }
-				using extract_view_t = decltype(elements | std::views::transform(&extract_element));
+				static       core::element_ref extract_element      (      core::element_own& element_ptr) noexcept { return *element_ptr; }
+				static const core::element_ref extract_element_const(const core::element_own& element_ptr) noexcept { return *element_ptr; }
+
+			public:
+				auto make_extract_view ()       { return elements | std::views::transform(&extract_element      ); }
+				auto make_extract_cview() const { return elements | std::views::transform(&extract_element_const); }
 			};
+
+		template <size_t SC> using extract_view_t  = decltype(container_own_inner<SC>{}.make_extract_view ());
+		template <size_t SC> using extract_cview_t = decltype(container_own_inner<SC>{}.make_extract_cview());
 		}
 
 	template <size_t SLOTS_COUNT = 0>
-	class container_own : public details::container_own_inner<SLOTS_COUNT>, public container_obs<typename details::container_own_inner<SLOTS_COUNT>::extract_view_t>
+	class container_own : public details::container_own_inner<SLOTS_COUNT>, public details::container_elements_view_interface<details::extract_view_t<SLOTS_COUNT>, details::extract_cview_t<SLOTS_COUNT>>
 		{
+		public:
+			static constexpr size_t slots_count{SLOTS_COUNT};
+
 		protected:
-			using container_own_t = details::container_own_inner<SLOTS_COUNT>;
-			using container_obs_t = container_obs<typename container_own_t::extract_view_t>;
-			using container_own_t::is_vector;
-			using container_own_t::is_single;
-			using container_own_t::is_array ;
-			using container_own_t::elements ;
+			static constexpr bool is_vector{slots_count == 0};
+			static constexpr bool is_single{slots_count == 1};
+			static constexpr bool is_array{slots_count >= 1};
 
 		public:
-			container_own() : container_obs_t{container_own_t::make_extract_view()}
-				{}
+			using  view_t = typename details::extract_view_t <SLOTS_COUNT>;
+			using cview_t = typename details::extract_cview_t<SLOTS_COUNT>;
+			using container_view_interface = details::container_elements_view_interface<view_t, cview_t>;
+			using details::container_own_inner<SLOTS_COUNT>::elements;
 
-			using container_obs_t::elements_view;
-
-			void update_view() noexcept { container_obs_t::elements_view = container_own_t::make_extract_view(); }
+			virtual        view_t get_elements_view()       noexcept { return details::container_own_inner<SLOTS_COUNT>::make_extract_view (); };
+			virtual const cview_t get_elements_view() const noexcept { return details::container_own_inner<SLOTS_COUNT>::make_extract_cview(); };
 		
 			template <typename T, typename ...Args>
 			T& emplace(Args&&... args) noexcept
-				requires(is_vector || is_single)
+				requires(is_vector)
 				{
 				return push<T>(std::make_unique<T>(std::forward<Args>(args)...));
 				}
 
 			template <typename T, typename ...Args>
 			T& emplace_at(size_t index, Args&&... args) noexcept
-				requires(is_vector || is_array)
 				{
 				if constexpr (is_vector) { return insert<T>(index, std::make_unique<T>(std::forward<Args>(args)...)); }
 				if constexpr (is_array ) { return set   <T>(index, std::make_unique<T>(std::forward<Args>(args)...)); }
@@ -222,14 +286,13 @@ namespace UI::inner::core
 				
 			template <typename T = core::element>
 			T& push(std::unique_ptr<T>&& element) noexcept
-				requires(is_vector || is_single)
+				requires(is_vector)
 				{
 				utils::observer_ptr<T> ptr{element.get()};
 
 				     if constexpr (is_vector) { elements.push_back(std::move(element)); }
 				else if constexpr (is_single) { elements[0] = std::move(element); }
 
-				update_view();
 				return *ptr;
 				}
 				
@@ -252,7 +315,6 @@ namespace UI::inner::core
 
 				elements.insert(elements.begin() + index, std::move(element));
 
-				update_view();
 				return *ptr;
 				}
 
@@ -266,24 +328,56 @@ namespace UI::inner::core
 					     if constexpr (is_vector) { elements.erase(it); }
 					else if constexpr (is_array ) { *it = nullptr; }
 
-					update_view();
 					return ret;
 					}
 
-				update_view();
 				return nullptr;
+				}
+		};
+
+	class wrapper_own : public details::wrapper_element_view_interface
+		{
+		public:
+			element_own element;
+
+			virtual       element_ref get_element()       noexcept { return *element; };
+			virtual const element_ref get_element() const noexcept { return *element; };
+
+			template <typename T, typename ...Args>
+			T& emplace(Args&&... args) noexcept
+				{
+				return push<T>(std::make_unique<T>(std::forward<Args>(args)...));
+				}
+				
+			template <typename T = core::element>
+			T& push(std::unique_ptr<T>&& element) noexcept
+				{
+				utils::observer_ptr<T> ptr{element.get()};
+
+				this->element = std::move(element);
+
+				return *ptr;
 				}
 		};
 
 	namespace concepts
 		{
 		template <typename T>
-		concept container_own = std::derived_from<T, UI::inner::core::container_own<T::slots_count>>;
+		concept container_own = std::derived_from<T, UI::core::container_own<T::slots_count>>;
 		template <typename T>
-		concept container_obs = std::derived_from<T, UI::inner::core::container_obs<typename T::view_t>>;
-
+		concept container_obs = std::derived_from<T, UI::core::container_obs<typename T::view_t, typename T::cview_t>>;
 		template <typename T>
 		concept container = container_own<T> || container_obs<T>;
+
+		template <typename T>
+		concept wrapper_own = std::derived_from<T, UI::core::wrapper_own>;
+		template <typename T>
+		concept wrapper_obs = std::derived_from<T, UI::core::wrapper_obs>;
+		template <typename T>
+		concept wrapper = wrapper_own<T> || wrapper_obs<T>;
+
+		template <typename T>
+		concept container_or_wrapper = container<T> || wrapper<T>;
 		}
 
 	struct widget
@@ -292,6 +386,7 @@ namespace UI::inner::core
 		virtual bool on_focus_lose () { return false; }
 		virtual bool on_mouse_enter() { return false; }
 		virtual bool on_mouse_leave() { return false; }
+		virtual bool on_mouse_move (vec2f position) { return false; }
 		virtual bool on_mouse_button(const utils::input::mouse::button_id& id, const bool& state) { return false; }
 		};
 
@@ -310,7 +405,7 @@ namespace UI::inner::core
 
 		};
 
-	template <concepts::container container_t>
+	template <concepts::container_or_wrapper container_t>
 	class container_widget : public container_t, public widget
 		{
 		public:

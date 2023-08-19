@@ -4,45 +4,43 @@
 
 #include "../core/core.h"
 
-namespace UI::inner::containers::details
+namespace UI::containers::details
 	{
 	struct constraints_t 
 		{
-		public:
-			float min;
-			float prf;
-			float max;
-			float max_finite;
+		float min;
+		float prf;
+		float max;
+		float max_finite;
 
-			static constraints_t hor(const core::element& element) noexcept
+		static constraints_t hor(const core::element& element) noexcept
+			{
+			return 
 				{
-				return 
-					{
-					element.get_size_min().x,
-					element.get_size_prf().x,
-					element.get_size_max().x
-					};
-				}
+				element.get_size_min().x,
+				element.get_size_prf().x,
+				element.get_size_max().x
+				};
+			}
 
-			static constraints_t ver(const core::element& element) noexcept
+		static constraints_t ver(const core::element& element) noexcept
+			{
+			return
 				{
-				return
-					{
-					element.get_size_min().y,
-					element.get_size_prf().y,
-					element.get_size_max().y
-					};
-				}
+				element.get_size_min().y,
+				element.get_size_prf().y,
+				element.get_size_max().y
+				};
+			}
 
-		private:
-			constraints_t(float min, float prf, float max) noexcept :
-				min{min}, prf{prf}, max{max}, 
-				max_finite{max != core::finf ? max : prf}
-				{}
+		constraints_t(float min, float prf, float max) noexcept :
+			min{min}, prf{prf}, max{max}, 
+			max_finite{max != core::finf ? max : prf}
+			{}
 		};
 
-	
-	inline std::vector<float> calc_sizes(float available, const std::vector<constraints_t>& constraints) noexcept
+	template <typename constraints_iterable_t>
+	inline std::vector<float> calc_sizes(float available, const constraints_iterable_t& constraints) noexcept
 		{
 		std::vector<float> ret; ret.resize(constraints.size());
 

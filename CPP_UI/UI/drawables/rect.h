@@ -8,7 +8,7 @@
 
 #include "common.h"
 
-namespace UI::inner::drawables
+namespace UI::drawables
 	{
 	struct rect : shape
 		{

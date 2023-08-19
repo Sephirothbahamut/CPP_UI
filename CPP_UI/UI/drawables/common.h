@@ -2,7 +2,7 @@
 
 #include "../core/core.h"
 
-namespace UI::inner::drawables
+namespace UI::drawables
 	{
 	struct draw_shape_data
 		{

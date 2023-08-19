@@ -11,7 +11,7 @@
 
 utils_disable_warnings_begin
 utils_disable_warning_msvc(4250)
-namespace UI::inner::widgets
+namespace UI::widgets
 	{
 	class toggle : public core::container_widget<containers::one_of<core::container_own<6>>>
 		{

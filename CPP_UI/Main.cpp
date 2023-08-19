@@ -28,6 +28,12 @@ struct style
 		UI::drawables::draw_shape_data down;
 		text_t text;
 		} button;
+
+	struct resizable_t
+		{
+		utils::MS::graphics::d2d::brush automatic;
+		utils::MS::graphics::d2d::brush manual;
+		} resizable;
 	};
 
 std::unique_ptr<UI::widgets::button> make_button(const style& style, const std::wstring& text, std::function<void()> callback)
@@ -49,6 +55,45 @@ std::unique_ptr<UI::widgets::button> make_button(const style& style, const std::
 	auto root{std::make_unique<UI::widgets::button>
 		(
 		callback,
+		UI::widgets::button::layers
+			{
+			.normal{make_layer(style.button.normal)},
+			.down  {make_layer(style.button.hover )},
+			.hover {make_layer(style.button.down  )}
+			}
+		)};
+
+	root->align_hor = UI::core::align_hor::center;
+	root->align_ver = UI::core::align_ver::middle;
+	root->sizes.min_x = 128.f;
+	root->sizes.min_y =  24.f;
+	root->sizes.prf_x = 128.f;
+	root->sizes.prf_y =  24.f;
+	root->sizes.max_x = 256.f;
+	root->sizes.max_y =  32.f;
+
+	return root;
+	}
+std::unique_ptr<UI::widgets::dropdown> make_dropdown(utils::MS::graphics::d2d::device& d2d_device, const style& style, const std::wstring& text, UI::core::element_own&& dropdown_root)
+	{
+	auto make_layer{[&](const UI::drawables::draw_shape_data& draw_shape_data)
+		{
+		auto root{std::make_unique<UI::containers::overlay<UI::core::container_own<2>>>()};
+		root->align_hor = UI::core::align_hor::center;
+		root->align_ver = UI::core::align_ver::middle;
+
+		if (auto & rect{root->emplace_at<UI::drawables::rect>(0)})
+			{
+			rect.draw_shape_data = draw_shape_data;
+			}
+		root->emplace_at<UI::drawables::text>(1, style.dw_factory, style.button.text.format, style.button.text.brush, text);
+		return root;
+		}};
+
+	auto root{std::make_unique<UI::widgets::dropdown>
+		(
+		std::move(dropdown_root),
+		d2d_device,
 		UI::widgets::button::layers
 			{
 			.normal{make_layer(style.button.normal)},
@@ -125,7 +170,7 @@ UI::core::element_own title_bar(utils::MS::window::base& window, const style& st
 		drag_layer.sizes.max_y = std::numeric_limits<float>::infinity();
 		}
 
-	if (auto& buttons_bar{root->emplace<UI::containers::group_hor<>>()})
+	if (auto& buttons_bar{root->emplace<UI::containers::hor<>>()})
 		{
 		buttons_bar.alignment = UI::core::align_ver::middle;
 		if (auto& text{buttons_bar.emplace<UI::drawables::text>(style.dw_factory, style.text.format, style.text.brush, string)})
@@ -162,19 +207,35 @@ UI::core::element_own title_bar(utils::MS::window::base& window, const style& st
 	return std::move(root);
 	}
 
-UI::core::element_own sample_ui(utils::MS::window::base& window, const style& style, const std::wstring& string)
+UI::core::element_own make_dropdown_menu(const style& style)
+	{
+	auto root_own{std::make_unique<UI::containers::ver<>>()};
+	auto& root{*root_own};
+	root.push(make_button(style, L"Hello world!", []() {std::cout << "Hello world!" << std::endl; }));
+	root.push(make_button(style, L"Hello cats! ", []() {std::cout << "Hello cats! " << std::endl; }));
+	root.push(make_button(style, L"Hello dogs! ", []() {std::cout << "Hello dogs! " << std::endl; }));
+	root.push(make_toggle(style, [](bool v) {std::cout << (v ? "Hello" : "Goodbye") << std::endl; }));
+	root.push(make_toggle(style, [](bool v) {std::cout << (v ? "Hello" : "Goodbye") << std::endl; }));
+	root.push(make_toggle(style, [](bool v) {std::cout << (v ? "Hello" : "Goodbye") << std::endl; }));
+
+	return root_own;
+	}
+
+UI::core::element_own sample_ui(utils::MS::window::base& window, utils::MS::graphics::d2d::device& d2d_device, const style& style, const std::wstring& string)
 	{
 	auto& default_mouse{window.get_module_ptr<utils::MS::window::input::mouse>()->default_mouse};
-	auto root{std::make_unique<UI::input_wrapper<>>(default_mouse)};
+	auto root{std::make_unique<UI::containers::input<>>(default_mouse)};
 
-	auto& ver{root->emplace<UI::containers::group_ver<>>()};
-	ver.alignment = UI::align_hor::left;
+	auto& ver{root->emplace<UI::containers::ver<>>()};
+	ver.alignment = UI::core::align_hor::left;
 
 	ver.push(title_bar(window, style, string));
 
-	if (auto & top{ver.emplace<UI::containers::group_hor<>>()})
+	ver.push(make_dropdown(d2d_device, style, L"dropdown", make_dropdown_menu(style)));
+
+	if (auto & top{ver.emplace<UI::containers::hor<true>>(style.resizable.automatic, style.resizable.manual)})
 		{
-		top.alignment = UI::align_ver::top;
+		top.alignment = UI::core::align_ver::top;
 		top.sizes.max_y = 64;
 
 		if (auto & padding{top.emplace<UI::containers::padding<>>(utils::math::geometry::aabb{.ll{8}, .up{8}, .rr{8}, .dw{8}})})
@@ -228,11 +289,15 @@ UI::core::element_own sample_ui(utils::MS::window::base& window, const style& st
 				element.sizes.max_x = 64;
 				}
 			}
+		
+		//top.emplace<UI::widgets::spacer>();
+
+		top.refresh_manual_sizes();
 		}
 
-	if (auto & bottom{ver.emplace<UI::containers::group_hor<>>()})
+	if (auto & bottom{ver.emplace<UI::containers::hor<>>()})
 		{
-		bottom.alignment = UI::align_ver::top;
+		bottom.alignment = UI::core::align_ver::top;
 		bottom.sizes.max_y = 128;
 
 		if (auto & padding{bottom.emplace<UI::containers::padding<>>(utils::math::geometry::aabb{.ll{8}, .up{8}, .rr{8}, .dw{8}})})
@@ -244,6 +309,21 @@ UI::core::element_own sample_ui(utils::MS::window::base& window, const style& st
 				element.sizes.max_x = 256;
 				}
 			}
+
+		//if (auto & resizable{bottom.emplace<UI::containers::resizable<>>()})
+		//	{
+		//	resizable.enable_vertical = false;
+		//
+		//	if (auto & padding{resizable.emplace<UI::containers::padding<>>(utils::math::geometry::aabb{.ll{8}, .up{8}, .rr{8}, .dw{8}})})
+		//		{
+		//		if (auto & element{padding.emplace<UI::widgets::dummy>()})
+		//			{
+		//			element.sizes.min_x = 10;
+		//			element.sizes.prf_x = 128;
+		//			element.sizes.max_x = 256;
+		//			}
+		//		}
+		//	}
 
 		bottom.emplace<UI::widgets::spacer>();
 
@@ -395,6 +475,11 @@ int main()
 					},
 				.brush{utils::MS::graphics::d2d::solid_brush{d2d_context, utils::graphics::colour::rgba_f{0.9f, 0.9f, 0.9f, 1.f}}.as<utils::MS::graphics::d2d::brush>()}
 				}
+			},
+		.resizable
+			{
+			.automatic{utils::MS::graphics::d2d::solid_brush{d2d_context, utils::graphics::colour::rgba_f{0.9f, 0.7f, 0.7f, 1.f}}.as<utils::MS::graphics::d2d::brush>()},
+			.manual   {utils::MS::graphics::d2d::solid_brush{d2d_context, utils::graphics::colour::rgba_f{0.7f, 0.8f, 0.9f, 1.f}}.as<utils::MS::graphics::d2d::brush>()}
 			}
 		};
 
@@ -485,13 +570,11 @@ int main()
 
 
 		//Setup UI
-
-		
-		auto& window_ui{window.emplace_module_from_create_info(UI::window::create_info{.root{sample_ui(window, style, L"Donald Fauntleroy Duck")}})};
+		auto& window_ui{window.emplace_module_from_create_info(UI::window<>::create_info{.root{sample_ui(window, d2d_device, style, L"Donald Fauntleroy Duck")}})};
 		
 		draw_operations.emplace([&window_ui, &ui_initializer](const utils::MS::graphics::d2d::device_context& context)
 			{
-			window_ui.get_root()->debug_draw(context, ui_initializer.get_debug_brushes());
+			//window_ui.get_root()->debug_draw(context, ui_initializer.get_debug_brushes());
 			window_ui.get_root()->draw(context);
 			});
 

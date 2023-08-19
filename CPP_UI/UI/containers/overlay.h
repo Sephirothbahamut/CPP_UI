@@ -4,7 +4,7 @@
 
 #include "common.h"
 
-namespace UI::inner::containers
+namespace UI::containers
 	{
 	template <core::concepts::container container_t = core::container_own<0>>
 	struct overlay : public container_t
@@ -14,7 +14,7 @@ namespace UI::inner::containers
 
 		virtual core::widget_obs get_mouseover(core::vec2f position) noexcept override
 			{
-			for (auto& element : std::ranges::reverse_view{container_t::elements_view})
+			for (auto& element : std::ranges::reverse_view{container_t::get_elements_view()})
 				{
 				if (auto ret{element.get_mouseover(position)}) { return ret; }
 				}
@@ -24,7 +24,7 @@ namespace UI::inner::containers
 		virtual core::vec2f _get_size_min() const noexcept final override
 			{
 			core::vec2f ret{0, 0};
-			for (const auto& element : container_t::elements_view)
+			for (const auto& element : container_t::get_elements_view())
 				{
 				core::vec2f element_val{element.get_size_min()};
 				ret.x = std::max(ret.x, element_val.x);
@@ -35,7 +35,7 @@ namespace UI::inner::containers
 		virtual core::vec2f _get_size_prf() const noexcept final override
 			{
 			core::vec2f ret{0, 0};
-			for (const auto& element : container_t::elements_view)
+			for (const auto& element : container_t::get_elements_view())
 				{
 				core::vec2f element_val{element.get_size_prf()};
 				ret.x = std::max(ret.x, element_val.x);
@@ -46,7 +46,7 @@ namespace UI::inner::containers
 		virtual core::vec2f _get_size_max() const noexcept final override
 			{
 			core::vec2f ret{0, 0};
-			for (const auto& element : container_t::elements_view)
+			for (const auto& element : container_t::get_elements_view())
 				{
 				core::vec2f element_val{element.get_size_max()};
 				ret.x = std::max(ret.x, element_val.x);
@@ -57,14 +57,14 @@ namespace UI::inner::containers
 
 		virtual void on_resize() final override
 			{
-			for (auto& element : container_t::elements_view)
+			for (auto& element : container_t::get_elements_view())
 				{
 				element.resize(container_t::rect.size());
 				}
 			}
 		virtual void on_reposition() noexcept override
 			{
-			for (auto& element : container_t::elements_view)
+			for (auto& element : container_t::get_elements_view())
 				{
 				float x{0};
 				switch (align_hor)

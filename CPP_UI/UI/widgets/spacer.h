@@ -2,7 +2,7 @@
 
 #include "common.h"
 
-namespace UI::inner::widgets
+namespace UI::widgets
 	{
 	struct spacer : core::element
 		{
